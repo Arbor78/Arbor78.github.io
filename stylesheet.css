@@ -1,0 +1,5 @@
+@charset "utf-8";
+/* CSS Document */
+address{display: block;font-size: 1em;padding: 50;font-family: 宋体;align-content: center;}
+main{color:red;display: block;font-family:黑体;font-size: 5em;padding: 10;}
+footer{align-content: center;width: 800;height: 90;}

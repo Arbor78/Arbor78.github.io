@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>拖放</title>
+    <script language="javascript" type="application/javascript" src="dragdrop.js"></script>
+    <link rel="stylesheet" href="../stylesheet.css"/>
+</head>
+
+<body onLoad="pageload();">
+   
+    <div class="gamearea">
+        <div id="divDragable" draggable="true"><p>在这儿按下鼠标，开始拖动吧</p></div>
+        <hr>
+        <div id="divDrop"><p>在这儿释放吧</p></div>
+    </div>
+    <hr>
+    
+    <div id="calc">
+        <p>简单的计算：</p>
+        <input id="ans" type="number">
+        <!--<input id="inc" type="button" value="+1"/>-->
+        <button id="inc">+1</button>
+    </div>
+     <div id="msg">
+         <p>运行信息：</p>
+    </div>
+</body>
+</html>
