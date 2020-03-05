@@ -114,7 +114,7 @@
             console.log("oneldrop:");
                e.preventDefault();
                let o=JSON.parse(e.dataTransfer.getData("text"));
-               console.log("dataTransfer.getData=",o);
+               console.log("JSON.parse：dataTransfer.getData=",o);    console.log("Original：dataTransfer.getData=",e.dataTransfer.getData("text"));
                 let targetidx=parseInt(e.target.innerHTML)-1;
                 let otarget=drops[targetidx];
                 console.log(otarget);
@@ -122,7 +122,8 @@
                                
                      $("msg").innerHTML="drop:<br>"+e.target.innerHTML;
                     console.log("drop:<br>"+e.target.innerHTML);
-                    this.innerHTML+="<br><pre>"+e.dataTransfer.getData("text")+"</pre>";
+                    //this.innerHTML+="<br><pre>"+e.dataTransfer.getData("text")+"</pre>";
+                    this.innerHTML+="<br><pre>"+o+"</pre>";
 
                    e.target.removeEventListener("drop",oneldrop);
                 e.target.removeEventListener("dragleave",oneldragleave);
