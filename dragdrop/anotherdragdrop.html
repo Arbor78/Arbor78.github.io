@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
     <head>
     <meta charset="utf-8">
@@ -39,29 +39,52 @@
         
         function onPageLoad(){
             //generate drag and drop items:
-            
+
+            function onElDrag(e){
+                    //eldragidx=drags[i-1].elidx;
+	eldragidx=e.target.elidx;
+                    //修改信息显示区的内容：
+                   //$("msg").innerHTML="dragstart:<br>"+e.target.innerHTML+"<br>"+JSON.stringify(drags[i-1]);
+                   $("msg").innerHTML="dragstart:<br>"+e.target.innerHTML+"<br>"+JSON.stringify(e.target.innerHTML);
+                   console.log("dragstart:<br>"+e.target.innerHTML);
+                    //e.dataTransfer.setData("text",JSON.stringify(drags[i-1]));
+                    e.dataTransfer.setData("text",JSON.stringify(e.target.innerHTML));
+                    console.log("info:");
+                   // console.log("this JSON:",JSON.stringify(drags[i-1]));
+                    console.log("this JSON:",JSON.stringify(e.target.innerHTML));
+                }
+           //
             for(let i=drags.length;i>0;i--){
                
                 drags[i-1].elpos=i-1;//正确位置序号
                 drags[i-1].eldragable=true;
-                drags[i-1].elondrag=function(e){
-                    eldragidx=drags[i-1].elidx;
-                    //修改信息显示区的内容：
-                   $("msg").innerHTML="dragstart:<br>"+e.target.innerHTML+"<br>"+JSON.stringify(drags[i-1]);
-                   console.log("dragstart:<br>"+e.target.innerHTML);
-                    e.dataTransfer.setData("text",JSON.stringify(drags[i-1]));
-                    console.log("info:");
-                    console.log("this JSON:",JSON.stringify(drags[i-1]));
-                }
+	//drags[i-1].elondrag=onElDrag;
+             //   drags[i-1].elondrag=function(e){
+              //      eldragidx=drags[i-1].elidx;
+             //       //修改信息显示区的内容：
+              //     $("msg").innerHTML="dragstart:<br>"+e.target.innerHTML+"<br>"+JSON.stringify(drags[i-1]);
+              //     console.log("dragstart:<br>"+e.target.innerHTML);
+             //       e.dataTransfer.setData("text",JSON.stringify(drags[i-1]));
+              //      console.log("info:");
+              //      console.log("this JSON:",JSON.stringify(drags[i-1]));
+             //   }
             }
+        //内容生成 
+      //step1:随机排序
             drags.sort(function () {
                 return Math.random() - 0.5;
             });
+
+        //step2：内容生成 
+             console.log("Begin generating:");
             for(let i=drags.length;i>0;i--){
+                console.log("i=",i);
                 drags[i-1].elidx=i-1;//显示位置索引
+                console.log("drags[",i-1,"].elidx=",drags[i-1].elidx);
+                console.log(i,"drags[",i-1,"]=",drags[i-1],"drags[",i-1,"].elid=",drags[i-1].elid);
                 $$("dragarea")[0].innerHTML+="<div "+"id=\""+drags[i-1].elid+"\" class=\"dragItem\"  draggable=\"true\">"+drags[i-1].elhtml+"</div>";
                 console.log("Generated:", $$("dragarea")[0].innerHTML);
-                console.log(drags[i-1]);
+                console.log(i,"drags[",i-1,"]=",drags[i-1]);
             }
            
             for(let i=0;i<drops.length;i++){
@@ -71,13 +94,15 @@
                 console.log("Generated:",$$("droparea")[0].innerHTML);
             }
            //拖放事件处理：
+           //获取对象
             var eldrags=$$("dragItem");
             var eldrops=$$("dropItem");
             //拖动元素的dragstart事件
-            
+            console.log("eldrags:");
             for(let i=0;i<eldrags.length;i++){ 
-                
-                eldrags[i].addEventListener("dragstart",drops[i].elondrag,false);
+                console.log(eldrags[i]);
+                //eldrags[i].addEventListener("dragstart",drops[i].elondrag,false);
+                eldrags[i].addEventListener("dragstart", onElDrag);
             }
             
            //释放位置元素的事件：dragleave，drop，dragover
@@ -86,9 +111,10 @@
                    console.log("dragleave:<br>"+e.target.innerHTML);
             }
             function oneldrop(e){
+            console.log("oneldrop:");
                e.preventDefault();
                let o=JSON.parse(e.dataTransfer.getData("text"));
-               console.log(o);
+               console.log("dataTransfer.getData=",o);
                 let targetidx=parseInt(e.target.innerHTML)-1;
                 let otarget=drops[targetidx];
                 console.log(otarget);
@@ -97,10 +123,11 @@
                      $("msg").innerHTML="drop:<br>"+e.target.innerHTML;
                     console.log("drop:<br>"+e.target.innerHTML);
                     this.innerHTML+="<br><pre>"+e.dataTransfer.getData("text")+"</pre>";
+
                    e.target.removeEventListener("drop",oneldrop);
                 e.target.removeEventListener("dragleave",oneldragleave);
                 e.target.removeEventListener("dragover",oneldragover);
-                eldrags[o.elidx].removeEventListener("dragstart",o.elondrag);
+             //   eldrags[o.elidx].removeEventListener("dragstart",o.elondrag);
                 }
             function oneldragover(e){
                     e.preventDefault();
@@ -123,6 +150,8 @@
     </head>
 
     <body onLoad="onPageLoad()">
+<!--  -->
+<!-- 生产代码示例 -->
 <!--
 <div class="dragarea">
         <div id="i1" class="dragItem" draggable="true" >1</div>
@@ -133,8 +162,12 @@
         <div id="p2" class="dropItem">2</div>
     </div>
 -->
+<!-- 显示框架，显示元素自动生成 -->
+<!-- 拖动元件区 -->
 <div class="dragarea"></div>
+<!-- 元件释放区 -->
 <div id="eldrop" class="droparea"></div>
+<!-- 运行信息显示区 -->
 <div id="msg"></div>
 </body>
 </html>
