@@ -85,7 +85,7 @@
             function oneldrop(e){
                e.preventDefault();
                let o=JSON.parse(e.dataTransfer.getData("text"));
-               console.log(o);
+               console.log("onElDrop,we get data:",o);
                 let targetidx=parseInt(e.target.innerHTML)-1;
                 let otarget=drops[targetidx];
                 //console.log(otarget);
@@ -93,6 +93,7 @@
                                
                      $("msg").innerHTML="drop:<br>"+e.target.innerHTML;
                     //console.log("drop:<br>"+e.target.innerHTML);
+                    //this.innerHTML+="<br><pre>"+e.dataTransfer.getData("text")+"</pre>";
                     this.innerHTML+="<br><pre>"+e.dataTransfer.getData("text")+"</pre>";
                    e.target.removeEventListener("drop",oneldrop);
                 e.target.removeEventListener("dragleave",oneldragleave);

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<!--Step 1 : Loading PixiJS -->
+		<script src="https://pixijs.download/release/pixi.js"></script>
+		<!-- <script src="js/pixi.min.js"></script> -->
+		<title>ESTS - 电工仿真实训系统</title>
+		<!-- 引入样式 -->
+		<!-- <link href="https://cdn.bootcss.com/element-ui/1.4.3/theme-default/index.css" rel="stylesheet">
+		<link rel="stylesheet" href="css/main.css"> -->
+		<!-- 先引入 Vue -->
+		<!-- <script src="https://cdn.bootcss.com/vue/2.4.2/vue.js"></script>
+ -->
+		<!-- 引入组件库 -->
+		<!-- <script src="https://cdn.bootcss.com/element-ui/1.4.3/index.js"></script>
+
+		<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script> -->
+
+
+	</head>
+	<body>
+		<div id="ests" style="margin: auto;"><canvas id="simu"></canvas></div>
+	</body>
+	<script>
+		//Step 2 : Creating an Application. Application is a helper class that simplifies working with PixiJS. It creates the renderer, creates the stage, and starts a ticker for updating. In production, you'll almost certainly want to do these steps yourself for added customization and control - we'll cover doing so in a later guide. For now, the Application class is a perfect way to start playing with PixiJS without worrying about the details.
+		//创建Application并添加到DOM：
+
+		const design_width = 1600;
+		const design_height = 900;
+		var stage_width = design_width;
+		var stage_height = design_height;
+		if (window.innerWidth / window.innerHeight > 16 / 9) {
+
+			stage_width = (window.innerHeight - 20) / 9 * 16;
+			stage_height = window.innerHeight - 20;
+		} else {
+			stage_width = window.innerWidth - 20;
+			stage_height = (window.innerWidth - 20) / 16 * 9;
+		}
+		const app = new PIXI.Application({
+			width: design_width,
+			height: design_height,
+			// antialias: true,
+			// transparent: false,
+			// resolution: window.devicePixelRatio || 1,
+			view: document.getElementById('simu'),
+			// backgroundColor: 0xdcdcdc
+			backgroundColor: 0x2f4f4f
+		});
+		//缩放舞台
+		app.renderer.resize(stage_width, stage_height);
+		app.stage.scale.set(stage_width / design_width, stage_height / design_height);
+
+		//Step 3 : Adding the View to the DOM.When the PIXI.Application class creates the renderer, it builds a Canvas element that it will render to. In order to see what we draw with PixiJS, we need to add this Canvas element to the web page's DOM.
+		// document.body.appendChild(app.view);//加载到body
+		// let ap_node = document.getElementById('ests'); //加载到指定div
+		// ap_node.appendChild(app.view);
+		//Step 4 : Creating a Sprite. A Sprite is a type of DisplayObject that wraps a loaded image resource to allow drawing it, scaling it, rotating it, and so forth.Magically load the PNG asynchronously
+		// let sprite = PIXI.Sprite.from('./img/sample.png');
+		// sprite.scale.x = 0.5;
+		// sprite.scale.y = 0.5;
+		// // sprite.x = 850;
+		// sprite.y = 600;
+
+		// let sprite =new PIXI.Sprite.fromImage('img/sample.png');//错误：不是构造函数
+		//Step 5 :Adding the Sprite to the Stage
+
+		//Some other sprites:
+		// TEXT
+		// let slang = new PIXI.Text('ESTS - 电工仿真实训系统');
+		// slang.style.fill = "0xffffff";
+
+		// slang.x = 100;
+		// slang.y = 20;
+		// IMAGE
+		// let sprite = PIXI.Sprite.from('img/sample.png');
+
+		// let sprite = new PIXI.Sprite.fromImage('img/sample.png');
+		// app.stage.addChild(sprite);
+		// let bg = PIXI.Sprite.from('img/断路器-3p-OFF.png');
+
+
+		// bg.x = 400;
+		// bg.y = 50; /* bg.height=100;bg.width=60; */
+		// bg.scale.x = 0.5;
+		// bg.scale.y = 0.5;
+
+		// app.stage.addChild(slang);
+		// app.stage.addChild(sprite);
+		// app.stage.addChild(bg);
+		//创建根容器root并添加到舞台
+		const root = new PIXI.Container();
+		app.stage.addChild(root);
+
+		//创建标题文本并添加到应用的root：
+		const titleBar = new PIXI.Container();
+		root.addChild(titleBar);
+		const slang = new PIXI.Text('ESTS - 电工仿真实训系统');
+		titleBar.addChild(slang);
+
+		slang.style.fill = "white";
+		slang.style.fontFamily = "SimHei"; //黑体
+		// slang.style.fontFamily = "SimSun";//宋体
+		slang.style.fontSize = 48;
+		slang.style.padding = 5;
+		//水平居中显示
+		slang.anchor.set(0.5, 0);
+		slang.x = design_width / 2;
+		slang.y = 10;
+
+		//底部信息栏
+		const statusBar = new PIXI.Container();
+		statusBar.x = 5;
+		statusBar.y = 855;
+		root.addChild(statusBar);
+		const msg = new PIXI.Text();
+		msg.style.fill = 'white';
+		statusBar.addChild(msg);
+		// msg.x = 0;
+		// msg.y = 850;
+		// root.addChild(msg);
+		msg.style.fontFamily = "SimSun";
+		msg.style.padding = 5;
+		msg.style.fontSize = 27;
+		msg.text = '标题栏宽度：' + slang.width + '：' + titleBar.width + ' ,高度：' + slang.height + ',' + titleBar.height +
+			'. 标题横坐标：' + slang.x + ' ,纵坐标：' + slang.y + ' 状态栏高度：' + statusBar.height + '. 状态文本宽度：' + msg.width + ' ,高度：' + msg.height + '.';
+		
+		//中部画布
+		const client = new PIXI.Container();
+		root.addChild(client);
+		client.y = 50;
+		client.x = 5;
+
+		// let sprite = PIXI.Sprite.from('./img/sample.png');
+		// client.addChild(sprite);
+		// sprite.x=0;sprite.y=0;
+		let bg = PIXI.Sprite.from('img/断路器-3p-OFF.png');
+		client.addChild(bg);
+		// let info = new PIXI.Text('电工仿真实训');
+		// client.addChild(info);
+		// info.style.fill = 'white';
+		// info.style.fontSize = 50;
+		// info.x=0;info.y=0;//默认位置即（0，0）
+	</script>
+</html>
