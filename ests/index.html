@@ -143,5 +143,27 @@
 		// info.style.fill = 'white';
 		// info.style.fontSize = 50;
 		// info.x=0;info.y=0;//默认位置即（0，0）
+		
+		//事件处理：
+		//根据窗口调整画布大小，缩放舞台
+		window.addEventListener('resize', () => {
+			// console.log("Window onresize!")
+			if (window.innerWidth / window.innerHeight > 16 / 9) {
+		
+				stage_width = (window.innerHeight - 20) / 9 * 16;
+				stage_height = window.innerHeight - 20;
+			} else {
+				stage_width = window.innerWidth - 20;
+				stage_height = (window.innerWidth - 20) / 16 * 9;
+			}
+			app.renderer.resize(stage_width, stage_height);
+			app.stage.scale.set(stage_width / design_width, stage_height / design_height);
+		
+			msg.text = '标题文本宽度：' + slang.width + ' ,高度：' + slang.height + ' 横坐标：' + slang.x + ' ,纵坐标：' + slang.y;
+		});
+		
+		
+		//退出页面：
+		window.addEventListener("unload",()=>app.destroy(true));
 	</script>
 </html>
