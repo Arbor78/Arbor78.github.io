@@ -125,31 +125,48 @@
 		msg.style.padding = 5;
 		msg.style.fontSize = 27;
 		msg.text = '标题栏宽度：' + slang.width + '：' + titleBar.width + ' ,高度：' + slang.height + ',' + titleBar.height +
-			'. 标题横坐标：' + slang.x + ' ,纵坐标：' + slang.y + ' 状态栏高度：' + statusBar.height + '. 状态文本宽度：' + msg.width + ' ,高度：' + msg.height + '.';
-		
+			'. 标题横坐标：' + slang.x + ' ,纵坐标：' + slang.y + ' 状态栏高度：' + statusBar.height + '. 状态文本宽度：' + msg.width + ' ,高度：' + msg
+			.height + '.';
+
 		//中部画布
 		const client = new PIXI.Container();
 		root.addChild(client);
 		client.y = 50;
 		client.x = 5;
 
-		// let sprite = PIXI.Sprite.from('./img/sample.png');
-		// client.addChild(sprite);
-		// sprite.x=0;sprite.y=0;
-		let bg = PIXI.Sprite.from('img/断路器-3p-OFF.png');
-		client.addChild(bg);
+		function Element(el) {
+			this._name = el.name;
+			this._parent = el.parent;
+			this._container = new PIXI.Container();
+			this._parent.addChild(this._container);
+			this._x = el.x | 0;
+			this._y = el.y | 0;
+			this._sprite = PIXI.Sprite.from(el.img);
+			this._container.addChild(this._sprite);
+			this._sprite.x = this._x;
+			this._sprite.y = this._y;
+
+		}
+		let sqtest = new Element({
+			'name': '断路器',
+			'parent': client,
+			'img': 'img/断路器-3p-OFF.png'
+		});
+
+		//let bg = PIXI.Sprite.from('img/断路器-3p-OFF.png');
+		//client.addChild(bg);
 		// let info = new PIXI.Text('电工仿真实训');
 		// client.addChild(info);
 		// info.style.fill = 'white';
 		// info.style.fontSize = 50;
 		// info.x=0;info.y=0;//默认位置即（0，0）
-		
+
 		//事件处理：
 		//根据窗口调整画布大小，缩放舞台
 		window.addEventListener('resize', () => {
 			// console.log("Window onresize!")
 			if (window.innerWidth / window.innerHeight > 16 / 9) {
-		
+
 				stage_width = (window.innerHeight - 20) / 9 * 16;
 				stage_height = window.innerHeight - 20;
 			} else {
@@ -158,12 +175,11 @@
 			}
 			app.renderer.resize(stage_width, stage_height);
 			app.stage.scale.set(stage_width / design_width, stage_height / design_height);
-		
+
 			msg.text = '标题文本宽度：' + slang.width + ' ,高度：' + slang.height + ' 横坐标：' + slang.x + ' ,纵坐标：' + slang.y;
 		});
-		
-		
+
 		//退出页面：
-		window.addEventListener("unload",()=>app.destroy(true));
+		window.addEventListener("unload", () => app.destroy(true));
 	</script>
 </html>
