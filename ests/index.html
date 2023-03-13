@@ -135,10 +135,9 @@
     // pencil.lineStyle(2, 0xFFFFFF, 2);
 
 
-    //元件构造函数：
+    //元件构造函数：el{name,text,img,hot,scale,x,y}元件，元件符号，图片，是否响应事件，缩放，x相对坐标，y相对坐标
     function Element(el, parentContainer) {
         this._name = el.name;
-        // console.log('+ Element:' + this._name);
         this._parentContainer = parentContainer || client;
         //元件容器：
         this._container = new PIXI.Container();
@@ -166,6 +165,7 @@
         this._text.y = 0;
         this._sprite.x = 0;
         this._sprite.y = this._text.height + 2;
+        // this._sprite.pivot.set(this._sprite.width/2, this._sprite.height/2);
         //元件边框
         // this._box=this._container._bounds.getRectangle();
         // this._box = this._container.getBounds();
@@ -174,17 +174,20 @@
         if (this._hot) {
             this._container.interactive = true;
             this._sprite.interactive = true;
+
             this._sprite.addEventListener('pointerover', () => {
-                console.log('>>>pointerover:===draw box===', this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
+                // console.log('>>>pointerover:===draw box===', this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
                 this._box = new PIXI.Graphics();
                 this._box.lineStyle(2, 0xFFFFFF, 2);
                 this._box.drawRect(this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
                 this._container.addChild(this._box);
             });
+
             this._sprite.addEventListener('pointerout', () => {
-                console.log('>>>pointerout');
+                // console.log('>>>pointerout');
                 this._container.removeChild(this._box);
             });
+
             this._sprite.addEventListener('pointertap', (e) => {
                 if (drawing) {
                     drawing = false;
@@ -196,8 +199,10 @@
                         //连线：自动计算start与end两元件之间的连线
                         const pencil = new PIXI.Graphics();
                         pencil.lineStyle(2, 0xFFFFFF, 2);
-                        pencil.moveTo(client.toGlobal(start.position).x, start.toGlobal(start.position).y);
-                        pencil.lineTo(client.toGlobal(end.position).x, end.toGlobal(end.position).y);
+                        pencil.moveTo(client.toLocal(start.toGlobal(start.position)).x + start.width / 2, client.toLocal(start.toGlobal(start.position)).y);
+                        pencil.lineTo(client.toLocal(end.toGlobal(end.position)).x + end.width / 2, client.toLocal(end.toGlobal(end.position)).y);
+                        console.log('start: ', client.toLocal(start.position).x, client.toLocal(start.position).y);
+                        console.log('end: ', client.toLocal(end.position).x, client.toLocal(end.position).y);
                         client.addChild(pencil);
                         return;
                     }
@@ -220,12 +225,11 @@
     //端子组
     function PortsGroup(name, el, parentContainer) {
         console.log('+PortsGroup:' + name);
-        this._parentContainer = parentContainer || client;
+        this._parentContainer = parentContainer || client;//默认加载到client容器
         this._ports = [];
         this._container = new PIXI.Container();
         this._parentContainer.addChild(this._container);
-        this._text = new PIXI.Text(name);
-        this._container.addChild(this._text);
+        //端子：
         let xPos = 0;
         let i = 0;
         el.forEach((port) => {
@@ -239,29 +243,27 @@
             console.log('----Pos:' + port.x + ',' + port.y);
 
         });
-
+        //端子组符号：
+        this._text = new PIXI.Text(name);
+        this._container.addChild(this._text);
         this._text.style.fill = 'white';
         this._text.style.fontSize = 20;
         this._text.anchor.set(0.5, 1);
-        this._text.x = this._container.width / 2;
+        this._text.x = this._container.width / 2 - 10;
         this._text.y = this._container.height;
         //画下边框
         this._graphics = new PIXI.Graphics();
-        // this._container.addChild(this._graphics);
-        // set a fill and line style
-        // graphics.beginFill(0xFF3300);
-        this._graphics.lineStyle(1, 0xffd900, 1);
-
-        // draw a shape
-        this._graphics.moveTo(5, this._container.height - 15);
-        this._graphics.lineTo(5, this._container.height + 2);
-        this._graphics.lineTo(this._container.width - 2, this._container.height + 2);
-        this._graphics.lineTo(this._container.width - 2, this._container.height - 15);
-        // graphics.closePath();
-        // graphics.endFill();
+        this._graphics.lineStyle(1, 0xffd900, 4);
+        this._graphics.moveTo(15, this._container.height - 5);
+        this._graphics.lineTo(15, this._container.height + 2);
+        this._graphics.lineTo(this._container.width - 25, this._container.height + 2);
+        this._graphics.lineTo(this._container.width - 25, this._container.height - 5);
         this._container.addChild(this._graphics);
 
-
+        // this._container.children.forEach(element => {
+        //     console.log(element);
+        //     // console.log(JSON.stringify(element));
+        // });
     }
     //元件组
     function ElementsGroup(info, parentContainer) {
