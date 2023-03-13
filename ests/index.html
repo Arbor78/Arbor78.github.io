@@ -201,8 +201,8 @@
                         pencil.lineStyle(2, 0xFFFFFF, 2);
                         pencil.moveTo(client.toLocal(start.toGlobal(start.position)).x + start.width / 2, client.toLocal(start.toGlobal(start.position)).y);
                         pencil.lineTo(client.toLocal(end.toGlobal(end.position)).x + end.width / 2, client.toLocal(end.toGlobal(end.position)).y);
-                        console.log('start: ', client.toLocal(start.position).x, client.toLocal(start.position).y);
-                        console.log('end: ', client.toLocal(end.position).x, client.toLocal(end.position).y);
+                        console.log('start: ', client.toLocal(start.toGlobal(start.position)).x, client.toLocal(start.toGlobal(start.position)).y);
+                        console.log('end: ', client.toLocal(end.toGlobal(end.position)).x, client.toLocal(end.toGlobal(end.position)).y);
                         client.addChild(pencil);
                         return;
                     }
