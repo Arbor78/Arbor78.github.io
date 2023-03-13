@@ -123,10 +123,16 @@
             .height + '.';
 
     //中部画布
-    const client = new PIXI.Container();
+    var client = new PIXI.Container();
     root.addChild(client);
     client.y = 50;
     client.x = 5;
+    var drawing = false;
+    var start = null;
+    var end = null;
+    var lines = [];
+    // const pencil = new PIXI.Graphics();
+    // pencil.lineStyle(2, 0xFFFFFF, 2);
 
 
     //元件构造函数：
@@ -153,6 +159,7 @@
         this._scale = el.scale || 1;
         console.log('\t', this._name, '.scale:', this._scale);
         this._sprite.scale.set(this._scale, this._scale);
+
         //符号与图片的位置：
         this._text.anchor.set(0.5, 0);
         this._text.x = this._sprite.width / 2;
@@ -161,24 +168,44 @@
         this._sprite.y = this._text.height + 2;
         //元件边框
         // this._box=this._container._bounds.getRectangle();
-        this._box = this._container.getBounds();
+        // this._box = this._container.getBounds();
         //事件处理：
         this._hot = el.hot || false;
         if (this._hot) {
             this._container.interactive = true;
             this._sprite.interactive = true;
             this._sprite.addEventListener('pointerover', () => {
-                console.log('>>>pointerover:');
-                this._frame = new PIXI.Graphics();
-                this._frame.lineStyle(2, 0xFFFFFF, 2);
-                this._frame.drawRect(this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
-                this._container.addChild(this._frame);
+                console.log('>>>pointerover:===draw box===', this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
+                this._box = new PIXI.Graphics();
+                this._box.lineStyle(2, 0xFFFFFF, 2);
+                this._box.drawRect(this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
+                this._container.addChild(this._box);
             });
             this._sprite.addEventListener('pointerout', () => {
                 console.log('>>>pointerout');
-                this._container.removeChild(this._frame);
+                this._container.removeChild(this._box);
             });
             this._sprite.addEventListener('pointertap', (e) => {
+                if (drawing) {
+                    drawing = false;
+                    if (e.target == start) {
+                        start = null;
+                        return;
+                    } else {
+                        end = e.target;
+                        //连线：自动计算start与end两元件之间的连线
+                        const pencil = new PIXI.Graphics();
+                        pencil.lineStyle(2, 0xFFFFFF, 2);
+                        pencil.moveTo(client.toGlobal(start.position).x, start.toGlobal(start.position).y);
+                        pencil.lineTo(client.toGlobal(end.position).x, end.toGlobal(end.position).y);
+                        client.addChild(pencil);
+                        return;
+                    }
+
+                } else {
+                    drawing = true;
+                    start = e.target;
+                }
                 console.log('>>>pointertap:', this._name, 'POS:', '容器内坐标x y | 全局坐标x y | 点击坐标x y');
                 console.log('\tpointertap:', e.target.x, e.target.y, '|', e.target.toGlobal(e.target.position).x, e.target.toGlobal(e.target.position).y, '|', e.data.global.x, e.data.global.y);
                 console.log('\tbox:', this._box.x, this._box.y, this._box.width, this._box.height);
