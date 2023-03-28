@@ -147,8 +147,31 @@
 
     });
     //点击划线
-    client.addEventListener('pointtap', (e) => {
-        linePoints.push({ 'x': e.data.global.x, 'y': e.data.global.y });
+    client.addEventListener('pointertap', (e) => {
+        console.log('点击');
+        let seg_start = null;
+        if (client_drawing) {
+            let line_seg = lines.pop();
+            client.removeChild(line_seg);
+
+        }
+        else {
+            client_drawing = true;
+
+        }
+        [seg_start] = linePoints.slice(-1);
+        let line_seg = new PIXI.Graphics();
+        line_seg.lineStyle(2, 0xFFFFFF, 2);
+        line_seg.moveTo(seg_start.x, seg_start.y)
+        line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);
+
+        client.addChild(line_seg);
+        lines.push(line_seg);
+        linePoints.push({ 'x': client.toLocal(e.data).x, 'y': client.toLocal(e.data).y });
+        let p = {};
+        [p] = linePoints.slice(-1);
+        console.log('\t点击->新增点：', p.x, p.y);
+        client_drawing = false;
     });
 
 
@@ -214,6 +237,7 @@
                     if (e.target == start) {//起点终点相同 取消画线 当前为测试代码 仅限两次点击均为端子的情形 尚不完备
                         start = null;
                         drawing = false;//停止画线
+                        client_drawing = false;
                         linePoints = [];
                         return;
                     } else {//起点终点不同 画线 当前为测试代码 仅限两次点击均为端子的情形 尚不完备
@@ -221,14 +245,23 @@
                         //连线：暂时自动计算start与end两元件之间的连线
                         const pencil = new PIXI.Graphics();
                         pencil.lineStyle(2, 0xFFFFFF, 2);
-                        pencil.moveTo(client.toLocal(start.toGlobal(start.position)).x + start.width / 2, client.toLocal(start.toGlobal(start.position)).y);
+                        //连线：暂时自动计算start与end两元件之间的连线
+                        // pencil.moveTo(client.toLocal(start.toGlobal(start.position)).x + start.width / 2, client.toLocal(start.toGlobal(start.position)).y);
+                        // pencil.lineTo(client.toLocal(end.toGlobal(end.position)).x + end.width / 2, client.toLocal(end.toGlobal(end.position)).y);
+                        // console.log('start: ', client.toLocal(start.toGlobal(start.position)).x, client.toLocal(start.toGlobal(start.position)).y);
+                        // console.log('end: ', client.toLocal(end.toGlobal(end.position)).x, client.toLocal(end.toGlobal(end.position)).y);
+                        //
+                        let line_seg = lines.pop();
+                        client.removeChild(line_seg);
+                        let seg_start;
+                        [seg_start] = linePoints.slice(-1);
+                        pencil.moveTo(seg_start.x, seg_start.y);
                         pencil.lineTo(client.toLocal(end.toGlobal(end.position)).x + end.width / 2, client.toLocal(end.toGlobal(end.position)).y);
-                        console.log('start: ', client.toLocal(start.toGlobal(start.position)).x, client.toLocal(start.toGlobal(start.position)).y);
-                        console.log('end: ', client.toLocal(end.toGlobal(end.position)).x, client.toLocal(end.toGlobal(end.position)).y);
                         //显示线段
                         client.addChild(pencil);
                         //存储线段
                         lines.push(pencil);
+                        client_drawing = false;
                         return;
                     }
 
