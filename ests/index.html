@@ -18,23 +18,19 @@
 
 		<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
 		<script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script> -->
-
-
 </head>
 
 <body>
     <div id="ests" style="margin: auto;"><canvas id="simu"></canvas></div>
 </body>
 <script>
-    //Step 2 : Creating an Application. Application is a helper class that simplifies working with PixiJS. It creates the renderer, creates the stage, and starts a ticker for updating. In production, you'll almost certainly want to do these steps yourself for added customization and control - we'll cover doing so in a later guide. For now, the Application class is a perfect way to start playing with PixiJS without worrying about the details.
-    //创建Application并添加到DOM：
+    console.log('PIXI Version：', PIXI.VERSION);
 
     const design_width = 1600;
     const design_height = 900;
     var stage_width = design_width;
     var stage_height = design_height;
     if (window.innerWidth / window.innerHeight > 16 / 9) {
-
         stage_width = (window.innerHeight - 20) / 9 * 16;
         stage_height = window.innerHeight - 20;
     } else {
@@ -51,37 +47,10 @@
         // backgroundColor: 0xdcdcdc
         backgroundColor: 0x2f4f4f
     });
+    var clientBGColor = 0x2f4f4f;//color name:darkslategray
     //缩放舞台
     app.renderer.resize(stage_width, stage_height);
     app.stage.scale.set(stage_width / design_width, stage_height / design_height);
-
-    //Step 3 : Adding the View to the DOM.When the PIXI.Application class creates the renderer, it builds a Canvas element that it will render to. In order to see what we draw with PixiJS, we need to add this Canvas element to the web page's DOM.
-    // document.body.appendChild(app.view);//加载到body
-    // let ap_node = document.getElementById('ests'); //加载到指定div
-    // ap_node.appendChild(app.view);
-    //Step 4 : Creating a Sprite. A Sprite is a type of DisplayObject that wraps a loaded image resource to allow drawing it, scaling it, rotating it, and so forth.Magically load the PNG asynchronously
-    // let sprite = PIXI.Sprite.from('./img/sample.png');
-    // sprite.scale.x = 0.5;
-    // sprite.scale.y = 0.5;
-    // // sprite.x = 850;
-    // sprite.y = 600;
-
-    // let sprite =new PIXI.Sprite.fromImage('img/sample.png');//错误：不是构造函数
-    //Step 5 :Adding the Sprite to the Stage
-
-    //Some other sprites:
-    // TEXT
-    // let slang = new PIXI.Text('ESTS - 电工仿真实训系统');
-    // slang.style.fill = "0xffffff";
-
-    // slang.x = 100;
-    // slang.y = 20;
-    // IMAGE
-    // let sprite = PIXI.Sprite.from('img/sample.png');
-
-    // let sprite = new PIXI.Sprite.fromImage('img/sample.png');
-    // app.stage.addChild(sprite);
-    // let bg = PIXI.Sprite.from('img/断路器-3p-OFF.png');
 
 
     //创建根容器root并添加到舞台
@@ -93,18 +62,18 @@
     //创建标题文本并添加到应用的root：
     const titleBar = new PIXI.Container();
     root.addChild(titleBar);
-    const slang = new PIXI.Text('ESTS - 电工仿真实训系统');
-    titleBar.addChild(slang);
+    const title = new PIXI.Text('ESTS - 电工仿真实训系统');
+    titleBar.addChild(title);
 
-    slang.style.fill = "white";
-    slang.style.fontFamily = "SimHei"; //黑体
-    // slang.style.fontFamily = "SimSun";//宋体
-    slang.style.fontSize = 48;
-    slang.style.padding = 5;
+    title.style.fill = "white";
+    title.style.fontFamily = "SimHei"; //黑体
+    // title.style.fontFamily = "SimSun";//宋体
+    title.style.fontSize = 48;
+    title.style.padding = 5;
     //水平居中显示
-    slang.anchor.set(0.5, 0);
-    slang.x = design_width / 2;
-    slang.y = 10;
+    title.anchor.set(0.5, 0);
+    title.x = design_width / 2;
+    title.y = 10;
 
     //底部信息栏
     const statusBar = new PIXI.Container();
@@ -118,8 +87,8 @@
     msg.style.fontFamily = "SimSun";
     msg.style.padding = 5;
     msg.style.fontSize = 27;
-    msg.text = '标题栏宽度：' + slang.width + '：' + titleBar.width + ' ,高度：' + slang.height + ',' + titleBar.height +
-        '. 标题横坐标：' + slang.x + ' ,纵坐标：' + slang.y + ' 状态栏高度：' + statusBar.height + '. 状态文本宽度：' + msg.width + ' ,高度：' + msg
+    msg.text = '标题栏宽度：' + title.width + '：' + titleBar.width + ' ,高度：' + title.height + ',' + titleBar.height +
+        '. 标题横坐标：' + title.x + ' ,纵坐标：' + title.y + ' 状态栏高度：' + statusBar.height + '. 状态文本宽度：' + msg.width + ' ,高度：' + msg
             .height + '.';
 
     //中部画布
@@ -127,12 +96,60 @@
     root.addChild(client);
     client.y = 50;
     client.x = 5;
-    var drawing = false;
+    client.interactiveChildren = true;
+    var drawing = false;//开始画线标志
     var start = null;
     var end = null;
-    var lines = [];
-    // const pencil = new PIXI.Graphics();
-    // pencil.lineStyle(2, 0xFFFFFF, 2);
+    var lines = [];//存储线段
+    var linePoints = [];//存储线段起点及转折点坐标,client坐标系,client.toLocal()
+    var pencil = new PIXI.Graphics();
+    pencil.lineStyle(2, 0xFFFFFF, 2);
+
+    //画布背景（client事件响应区）
+    pencil.beginFill(clientBGColor);
+    // pencil.beginFill(0xffffff);
+    let clientBG = pencil.drawRect(0, 0, design_width - 10, design_height - 100);
+    // pencil.endFill();
+    client.addChild(clientBG);
+
+    //画布事件响应：
+    // client.interactive = true;//过时写法
+    // client.eventMode = 'none';//初始化 关闭画布事件响应，关闭后子显示对象也不响应事件
+    client.eventMode = 'static';
+    //跟随画线
+    var client_drawing = false;//跟随画线标志，已经画了一条线
+    client.addEventListener('pointermove', (e) => {
+        if (!drawing) return;
+        // console.log('\npointmove:')
+        // console.log("pointermove：\n\t对象位置：", e.target.position.x, e.target.position.y, '\n\t鼠标位置：', e.data.x, e.data.y, '\n\t鼠标相对位置：', client.toLocal(e.data).x, client.toLocal(e.data).y);
+
+        let seg_start = null;
+        if (client_drawing) {
+            let line_seg = lines.pop();
+            client.removeChild(line_seg);
+
+        }
+        else {
+            client_drawing = true;
+
+        }
+        [seg_start] = linePoints.slice(-1);
+        let line_seg = new PIXI.Graphics();
+        line_seg.lineStyle(2, 0xFFFFFF, 2);
+        line_seg.moveTo(seg_start.x, seg_start.y)
+        line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);
+        // linePoints.push({ 'x': client.toLocal(e.data).x, 'y': client.toLocal(e.data).y });
+        // let p = {};
+        // [p] = linePoints.slice(-1);
+        // console.log('\t新增点：', p.x, p.y);
+        client.addChild(line_seg);
+        lines.push(line_seg);
+
+    });
+    //点击划线
+    client.addEventListener('pointtap', (e) => {
+        linePoints.push({ 'x': e.data.global.x, 'y': e.data.global.y });
+    });
 
 
     //元件构造函数：el{name,text,img,hot,scale,x,y}元件，元件符号，图片，是否响应事件，缩放，x相对坐标，y相对坐标
@@ -142,6 +159,7 @@
         //元件容器：
         this._container = new PIXI.Container();
         this._parentContainer.addChild(this._container);
+
         //元件在父容器中的位置坐标：
         this._x = el.x || 0;
         this._y = el.y || 0;
@@ -156,7 +174,7 @@
         this._sprite = PIXI.Sprite.from(el.img);
         this._container.addChild(this._sprite);
         this._scale = el.scale || 1;
-        console.log('\t', this._name, '.scale:', this._scale);
+        console.log('\t', this._name);
         this._sprite.scale.set(this._scale, this._scale);
 
         //符号与图片的位置：
@@ -172,44 +190,56 @@
         //事件处理：
         this._hot = el.hot || false;
         if (this._hot) {
-            this._container.interactive = true;
-            this._sprite.interactive = true;
+            // this._sprite.interactive = true;//过时写法
+            this._sprite.eventMode = 'static';
 
+            //悬停时在端子图形上显示边框
             this._sprite.addEventListener('pointerover', () => {
-                // console.log('>>>pointerover:===draw box===', this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
                 this._box = new PIXI.Graphics();
                 this._box.lineStyle(2, 0xFFFFFF, 2);
                 this._box.drawRect(this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
                 this._container.addChild(this._box);
             });
 
+            //光标移出时擦除边框
             this._sprite.addEventListener('pointerout', () => {
-                // console.log('>>>pointerout');
                 this._container.removeChild(this._box);
             });
 
+            //点击端子图片时开始或终止连线：首次点击开始，二次点击自身取消划线，二次点击目标为其他端子终止划线
             this._sprite.addEventListener('pointertap', (e) => {
                 if (drawing) {
                     drawing = false;
-                    if (e.target == start) {
+
+                    if (e.target == start) {//起点终点相同 取消画线 当前为测试代码 仅限两次点击均为端子的情形 尚不完备
                         start = null;
+                        drawing = false;//停止画线
+                        linePoints = [];
                         return;
-                    } else {
+                    } else {//起点终点不同 画线 当前为测试代码 仅限两次点击均为端子的情形 尚不完备
                         end = e.target;
-                        //连线：自动计算start与end两元件之间的连线
+                        //连线：暂时自动计算start与end两元件之间的连线
                         const pencil = new PIXI.Graphics();
                         pencil.lineStyle(2, 0xFFFFFF, 2);
                         pencil.moveTo(client.toLocal(start.toGlobal(start.position)).x + start.width / 2, client.toLocal(start.toGlobal(start.position)).y);
                         pencil.lineTo(client.toLocal(end.toGlobal(end.position)).x + end.width / 2, client.toLocal(end.toGlobal(end.position)).y);
                         console.log('start: ', client.toLocal(start.toGlobal(start.position)).x, client.toLocal(start.toGlobal(start.position)).y);
                         console.log('end: ', client.toLocal(end.toGlobal(end.position)).x, client.toLocal(end.toGlobal(end.position)).y);
+                        //显示线段
                         client.addChild(pencil);
+                        //存储线段
+                        lines.push(pencil);
                         return;
                     }
 
                 } else {
-                    drawing = true;
+                    drawing = true;//开始画线
                     start = e.target;
+                    linePoints.push({ 'x': client.toLocal(start.toGlobal(start.position)).x + start.width / 2, 'y': client.toLocal(start.toGlobal(start.position)).y });
+                    let p = {};
+                    [p] = linePoints.slice(-1);
+                    console.log('\t新增点：', p.x, p.y, linePoints);
+                    // client.eventMode = 'static';//clent开响应，开始跟随划线
                 }
                 console.log('>>>pointertap:', this._name, 'POS:', '容器内坐标x y | 全局坐标x y | 点击坐标x y');
                 console.log('\tpointertap:', e.target.x, e.target.y, '|', e.target.toGlobal(e.target.position).x, e.target.toGlobal(e.target.position).y, '|', e.data.global.x, e.data.global.y);
@@ -227,8 +257,55 @@
         console.log('+PortsGroup:' + name);
         this._parentContainer = parentContainer || client;//默认加载到client容器
         this._ports = [];
+
+
         this._container = new PIXI.Container();
         this._parentContainer.addChild(this._container);
+
+        this._portsW = 0;//端子总宽度
+        this._portsH = 0;//端子总高度
+        //下边框及文字符号
+        //下边框位置
+        this._linePad = 5
+        this._lineX = 0;
+        this._lineY = 0;
+        this._lineW = 0;
+        this._lineH = 5;
+        //文字符号位置
+        this._text = new PIXI.Text(name);
+        this._container.addChild(this._text);
+        this._text.style.fill = 'white';
+        this._text.style.fontSize = 20;
+        this._text.anchor.set(0.5, 0);
+        this._textX = this._portsW / 2 - this._text.width / 2;
+        this._textY = this._portsH + this._text.height;
+        //用于画下边框的画笔
+        this._graphics = new PIXI.Graphics();
+        this._graphics.lineStyle(1, 0xffd900, 4);
+
+        this._container.addChild(this._graphics);
+
+        //
+        this._draw = () => {
+            console.log('绘制符号');
+            //端子组符号：
+            // this._textX = this._text.width / 2;
+            this._textX = this._container.width / 2 - this._text.width / 2;
+            this._textY = this._portsH + 5;
+            this._text.x = this._textX;
+
+            this._text.y = this._textY;
+            console.log('portsW:', this._portsW, 'containerW:', this._container.width);
+            console.log('绘制下边框');
+            //重绘下边框
+            this._container.removeChild(this._graphics);
+            this._graphics.moveTo(15, this._container.height - 5);
+            this._graphics.lineTo(15, this._container.height + 2);
+            this._graphics.lineTo(this._container.width - 25, this._container.height + 2);
+            this._graphics.lineTo(this._container.width - 25, this._container.height - 5);
+            this._container.addChild(this._graphics);
+        };
+
         //端子：
         let xPos = 0;
         let i = 0;
@@ -237,33 +314,43 @@
             let p = new Element(port, parentContainer);
             this._ports.push(p._container);
             this._container.addChild(p._container);
+            this._portsW += p._container.width;
+            this._portsH = p._container.height;
             xPos += i * p._container.width;
             i++;
             p.x = xPos;
-            console.log('----Pos:' + port.x + ',' + port.y);
-
+            console.log('\t----Pos:' + port.x + ',' + port.y, 'portsW', this._portsW, 'Continer w:', this._container.width, 'h:', this._container.height);
+            // this._container.dispatchEvent(PortAddedEvent);
         });
-        //端子组符号：
-        this._text = new PIXI.Text(name);
-        this._container.addChild(this._text);
-        this._text.style.fill = 'white';
-        this._text.style.fontSize = 20;
-        this._text.anchor.set(0.5, 1);
-        this._text.x = this._container.width / 2 - 10;
-        this._text.y = this._container.height;
-        //画下边框
-        this._graphics = new PIXI.Graphics();
-        this._graphics.lineStyle(1, 0xffd900, 4);
-        this._graphics.moveTo(15, this._container.height - 5);
-        this._graphics.lineTo(15, this._container.height + 2);
-        this._graphics.lineTo(this._container.width - 25, this._container.height + 2);
-        this._graphics.lineTo(this._container.width - 25, this._container.height - 5);
-        this._container.addChild(this._graphics);
 
-        // this._container.children.forEach(element => {
-        //     console.log(element);
-        //     // console.log(JSON.stringify(element));
-        // });
+        this._draw();
+
+        console.log('\tContiner w:', this._container.width, 'h:', this._container.height);
+        // this._container.dispatchEvent(this._PortAddedEvent);
+        // console.log('\tdispatchEvent:PortAddedEvent', this._PortAddedEvent);
+
+
+
+        // this._graphics.moveTo(15, this._container.height - 5);
+        // this._graphics.lineTo(15, this._container.height + 2);
+        // this._graphics.lineTo(this._container.width - 25, this._container.height + 2);
+        // this._graphics.lineTo(this._container.width - 25, this._container.height - 5);
+        // this._container.addChild(this._graphics);
+
+        this.addPort = portJSON => {
+            console.log('addPort:' + portJSON.name);
+            let p = new Element(portJSON, parentContainer);
+            this._ports.push(p._container);
+            let xPos = this._container.width + p._container;
+            this._container.addChild(p._container);
+            p.x = xPos;
+            console.log('\tPos:' + port.x + ',' + port.y);
+            // let PortAddedEvent = new PIXI.FederatedEvent(new PIXI.EventBoundary(this._parentContainer));
+            // this._container.dispatchEvent(PortAddedEvent);
+            this._draw();
+        }
+        this._draw();
+
     }
     //元件组
     function ElementsGroup(info, parentContainer) {
@@ -340,7 +427,7 @@
     }], client);
 
     //事件处理：
-    //根据窗口调整画布大小，缩放舞台
+    //根据窗口调整画布大小，缩放舞台、
     window.addEventListener('resize', () => {
         // console.log("Window onresize!")
         if (window.innerWidth / window.innerHeight > 16 / 9) {
@@ -354,7 +441,7 @@
         app.renderer.resize(stage_width, stage_height);
         app.stage.scale.set(stage_width / design_width, stage_height / design_height);
 
-        msg.text = '标题文本宽度：' + slang.width + ' ,高度：' + slang.height + ' 横坐标：' + slang.x + ' ,纵坐标：' + slang
+        msg.text = '标题文本宽度：' + title.width + ' ,高度：' + title.height + ' 横坐标：' + title.x + ' ,纵坐标：' + title
             .y;
     });
 
@@ -362,7 +449,7 @@
     window.addEventListener("unload", () => app.destroy(true));
 
     //
-    app.stage.interactive = true;
+    // app.stage.interactive = true;
     app.stage.hitArea = app.screen;
 </script>
 
