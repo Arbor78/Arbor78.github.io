@@ -100,10 +100,12 @@
     var drawing = false;//开始画线标志
     var start = null;
     var end = null;
-    var lines = [];//存储线段
+    var lines = [];//存储所有的连线
+    var line_segments = [];//存储两端子之间连线的线段
     var linePoints = [];//存储线段起点及转折点坐标,client坐标系,client.toLocal()
     var pencil = new PIXI.Graphics();
     pencil.lineStyle(2, 0xFFFFFF, 2);
+    var onPortClicked = false;
 
     //画布背景（client事件响应区）
     pencil.beginFill(clientBGColor);
@@ -113,7 +115,7 @@
     client.addChild(clientBG);
 
     //画布事件响应：
-    // client.interactive = true;//过时写法
+    client.interactive = true;//过时写法
     // client.eventMode = 'none';//初始化 关闭画布事件响应，关闭后子显示对象也不响应事件
     client.eventMode = 'static';
     //跟随画线
@@ -122,10 +124,9 @@
         if (!drawing) return;
         // console.log('\npointmove:')
         // console.log("pointermove：\n\t对象位置：", e.target.position.x, e.target.position.y, '\n\t鼠标位置：', e.data.x, e.data.y, '\n\t鼠标相对位置：', client.toLocal(e.data).x, client.toLocal(e.data).y);
-
         let seg_start = null;
         if (client_drawing) {
-            let line_seg = lines.pop();
+            let line_seg = line_segments.pop();
             client.removeChild(line_seg);
 
         }
@@ -143,15 +144,21 @@
         // [p] = linePoints.slice(-1);
         // console.log('\t新增点：', p.x, p.y);
         client.addChild(line_seg);
-        lines.push(line_seg);
+        line_segments.push(line_seg);
 
     });
     //点击划线
     client.addEventListener('pointertap', (e) => {
-        console.log('点击');
+        console.log('POINTERTAP:点击');
+        if (onPortClicked) {
+            onPortClicked = false;//阻止冒泡尝试 点击端子时置true，点击其他位置是为false
+            console.log('刚才点击了端子，我接到了通知，但我啥也不干哈。嘿嘿...')
+            return;
+        }
+        console.log('我收到通知，你点击了绘图区，这次我要做点什么...')
         let seg_start = null;
         if (client_drawing) {
-            let line_seg = lines.pop();
+            let line_seg = line_segments.pop();
             client.removeChild(line_seg);
 
         }
@@ -159,14 +166,16 @@
             client_drawing = true;
 
         }
+        console.log(linePoints);
         [seg_start] = linePoints.slice(-1);
         let line_seg = new PIXI.Graphics();
         line_seg.lineStyle(2, 0xFFFFFF, 2);
+        console.log(seg_start);
         line_seg.moveTo(seg_start.x, seg_start.y)
         line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);
 
         client.addChild(line_seg);
-        lines.push(line_seg);
+        line_segments.push(line_seg);
         linePoints.push({ 'x': client.toLocal(e.data).x, 'y': client.toLocal(e.data).y });
         let p = {};
         [p] = linePoints.slice(-1);
@@ -213,8 +222,8 @@
         //事件处理：
         this._hot = el.hot || false;
         if (this._hot) {
-            // this._sprite.interactive = true;//过时写法
-            this._sprite.eventMode = 'static';
+            // this._sprite.;//防冒泡
+            this._sprite.eventMode = 'dynamic';//'passive'：不响应；'static':响应 冒泡；'dynamic'：响应 冒泡
 
             //悬停时在端子图形上显示边框
             this._sprite.addEventListener('pointerover', () => {
@@ -231,27 +240,32 @@
 
             //点击端子图片时开始或终止连线：首次点击开始，二次点击自身取消划线，二次点击目标为其他端子终止划线
             this._sprite.addEventListener('pointertap', (e) => {
+                console.log(this._sprite.name, 'POINTERTAP:')
+                onPortClicked = true;//阻止冒泡尝试 点击端子时置true，点击其他位置是为false
                 if (drawing) {
-                    drawing = false;
 
-                    if (e.target == start) {//起点终点相同 取消画线 当前为测试代码 仅限两次点击均为端子的情形 尚不完备
+                    drawing = false;//中/终止画线
+                    client_drawing = false;
+                    if (e.target == start) {//起点终点相同 中止画线 删除已画线段
                         start = null;
-                        drawing = false;//停止画线
-                        client_drawing = false;
                         linePoints = [];
-                        return;
-                    } else {//起点终点不同 画线 当前为测试代码 仅限两次点击均为端子的情形 尚不完备
+                        line_segments.forEach(line_seg => {
+                            client.removeChild(line_seg);
+                        });
+                        line_segments = [];
+                        return;//return false 不能阻止事件冒泡
+                    } else {//起点终点不同 终止画线
                         end = e.target;
-                        //连线：暂时自动计算start与end两元件之间的连线
+
                         const pencil = new PIXI.Graphics();
                         pencil.lineStyle(2, 0xFFFFFF, 2);
-                        //连线：暂时自动计算start与end两元件之间的连线
+                        //连线：试验代码 暂时自动计算start与end两元件之间的连线
                         // pencil.moveTo(client.toLocal(start.toGlobal(start.position)).x + start.width / 2, client.toLocal(start.toGlobal(start.position)).y);
                         // pencil.lineTo(client.toLocal(end.toGlobal(end.position)).x + end.width / 2, client.toLocal(end.toGlobal(end.position)).y);
                         // console.log('start: ', client.toLocal(start.toGlobal(start.position)).x, client.toLocal(start.toGlobal(start.position)).y);
                         // console.log('end: ', client.toLocal(end.toGlobal(end.position)).x, client.toLocal(end.toGlobal(end.position)).y);
                         //
-                        let line_seg = lines.pop();
+                        let line_seg = line_segments.pop();
                         client.removeChild(line_seg);
                         let seg_start;
                         [seg_start] = linePoints.slice(-1);
@@ -260,9 +274,11 @@
                         //显示线段
                         client.addChild(pencil);
                         //存储线段
-                        lines.push(pencil);
+                        line_segments.push(pencil);
+                        lines.push(line_segments);
                         client_drawing = false;
-                        return;
+                        linePoints = [];
+                        return;//return false 不能阻止事件冒泡
                     }
 
                 } else {
@@ -274,12 +290,12 @@
                     console.log('\t新增点：', p.x, p.y, linePoints);
                     // client.eventMode = 'static';//clent开响应，开始跟随划线
                 }
-                console.log('>>>pointertap:', this._name, 'POS:', '容器内坐标x y | 全局坐标x y | 点击坐标x y');
-                console.log('\tpointertap:', e.target.x, e.target.y, '|', e.target.toGlobal(e.target.position).x, e.target.toGlobal(e.target.position).y, '|', e.data.global.x, e.data.global.y);
-                console.log('\tbox:', this._box.x, this._box.y, this._box.width, this._box.height);
-                //元素图片边框：
-                console.log('\tsprite box:', this._sprite.getBounds().x, this._sprite.getBounds().y, this._sprite.getBounds().width, this._sprite.getBounds().height);
-                console.log('\tsprite pivot:', this._sprite.pivot.x, this._sprite.pivot.y);
+                // console.log('>>>pointertap:', this._name, 'POS:', '容器内坐标x y | 全局坐标x y | 点击坐标x y');
+                // console.log('\tpointertap:', e.target.x, e.target.y, '|', e.target.toGlobal(e.target.position).x, e.target.toGlobal(e.target.position).y, '|', e.data.global.x, e.data.global.y);
+                // console.log('\tbox:', this._box.x, this._box.y, this._box.width, this._box.height);
+                // //元素图片边框：
+                // console.log('\tsprite box:', this._sprite.getBounds().x, this._sprite.getBounds().y, this._sprite.getBounds().width, this._sprite.getBounds().height);
+                // console.log('\tsprite pivot:', this._sprite.pivot.x, this._sprite.pivot.y);
 
             });
         }
