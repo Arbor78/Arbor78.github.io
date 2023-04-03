@@ -52,7 +52,7 @@
     app.renderer.resize(stage_width, stage_height);
     app.stage.scale.set(stage_width / design_width, stage_height / design_height);
 
-
+    console.log('stage:', stage_width, stage_height);
     //创建根容器root并添加到舞台
     const root = new PIXI.Container();
     app.stage.addChild(root);
@@ -109,18 +109,18 @@
 
     //画布背景（client事件响应区）
     pencil.beginFill(clientBGColor);
-    // pencil.beginFill(0xffffff);
-    // pencil.beginFill(0xdcdcdc);
     let clientBG = pencil.drawRect(0, 0, design_width - 10, design_height - 100);
     pencil.endFill();
     client.addChild(clientBG);
 
-    let pen = new PIXI.Graphics();
-    pen.lineStyle(2, 0xdcdcdc, 2);
-    // let c = pen.drawRect(client.toLocal({ 'x': client.width, 'y': client.height }).x - 10, client.toLocal({ 'x': client.width, 'y': client.height }).y - 10, 15, 15);
-    let c = pen.drawRect(client.width - 1000, client.height.y - 500, 15, 15);
-    console.log(client.toLocal({ 'x': client.width, 'y': client.height }), { 'x': client.width, 'y': client.height });
-    client.addChild(c);
+    // let pen = new PIXI.Graphics();
+    // pen.lineStyle(2, 0xdcdcdc, 2);
+    // // let c = pen.drawRect(client.toLocal({ 'x': client.width, 'y': client.height }).x - 10, client.toLocal({ 'x': client.width, 'y': client.height }).y - 10, 15, 15);
+    // let c = pen.drawRect(client.width - 1000, client.height.y - 500, 15, 15);
+    // let o = { 'x': client.width, 'y': client.height };
+    // // console.log('Origin:', o, '\nlocal:', client.toLocal(o), '\nglobal:', client.toGlobal(o));
+    // // console.log(client.toLocal({ 'x': client.width, 'y': client.height }), { 'x': client.width, 'y': client.height },client.toGlobal());
+    // client.addChild(c);
 
 
 
@@ -157,7 +157,7 @@
         this._sprite.x = 0;
         this._sprite.y = this._text.height + 2;
         // this._sprite.pivot.set(this._sprite.width/2, this._sprite.height/2);
-        //元件边框
+        //元件边框 初始化
         this._box = new PIXI.Graphics();
         this._box.lineStyle(2, 0xFFFFFF, 2);
         this._box.drawRect(this._sprite.x, this._sprite.y, this._sprite.width, this._sprite.height);
@@ -181,7 +181,7 @@
 
             //点击端子图片时开始或终止连线：首次点击开始，二次点击自身取消划线，二次点击目标为其他端子终止划线
             this._sprite.addEventListener('pointertap', (e) => {
-                console.log(this._sprite.name, 'POINTERTAP:')
+                console.log(this._sprite.name, 'POINTERTAP:', e.globalX, e.globalY);
                 onPortClicked = true;//阻止冒泡 点击端子时置true，点击其他位置是为false
                 if (drawing) {
 
@@ -329,7 +329,7 @@
         this._parentContainer = parentContainer || client;
         this._name = info.name;
         this._text = info.text;
-        console.log('+ ElementGroup:' + this._name);
+        // console.log('+ ElementGroup:' + this._name);
         this._container = new PIXI.Container();
         this._parentContainer.addChild(this._container);
         this._elements = new Array();
@@ -469,7 +469,6 @@
     window.addEventListener('resize', () => {
         // console.log("Window onresize!")
         if (window.innerWidth / window.innerHeight > 16 / 9) {
-
             stage_width = (window.innerHeight - 20) / 9 * 16;
             stage_height = window.innerHeight - 20;
         } else {
@@ -481,6 +480,7 @@
 
         msg.text = '标题文本宽度：' + title.width + ' ,高度：' + title.height + ' 横坐标：' + title.x + ' ,纵坐标：' + title
             .y;
+        // app.stage.hitArea = app.screen;
     });
 
     //退出页面：
@@ -488,16 +488,17 @@
 
     //
     // app.stage.interactive = true;
-    app.stage.hitArea = app.screen;
+    // app.stage.hitArea = app.screen;
 
     //画布事件响应：
     // client.interactive = true;//过时写法
     // client.eventMode = 'none';//初始化 关闭画布事件响应，关闭后子显示对象也不响应事件
-    client.eventMode = 'static';
+    // client.eventMode = 'static';
+    client.eventMode = 'dynamic';
     //跟随画线
     var client_drawing = false;//跟随画线标志，已经画了一条线
     client.addEventListener('pointermove', (e) => {
-        // console.log('\npointmove:')
+        // console.log('\npointmove 悬停位置：', e.data.x, ',', e.data.y, e.globalX, e.globalY, e.screenX, e.screenY);
         if (!drawing) return;
 
         if (client_drawing) {//已经跟随鼠标画出了一条临时线，删掉
@@ -513,24 +514,45 @@
         let line_seg = new PIXI.Graphics();
         line_seg.lineStyle(2, 0xFFFFFF, 2);
         line_seg.moveTo(seg_start.x, seg_start.y);//从上一条正式线段终点开始画
-        line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);//画到鼠标位置
+        let p = client.toLocal({ 'x': e.globalX, 'y': e.globalY });
+        // line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);//画到鼠标位置
+        line_seg.lineTo(p.x, p.y);
         client.addChild(line_seg);
         line_segments.push(line_seg);//保存线段对象，以便删除
     });
     //点击划线
+    // app.stage.eventMode = 'static';
+    // app.stage.addEventListener('pointertap', (e) => {
+    //     // console.log('POINTERTAP:点击', e);
+    //     console.log('stage POINTERTAP 点击位置：\n', e.data.x, ',', e.data.y, e.globalX, e.globalY);
+
+    // });
+
     client.addEventListener('pointertap', (e) => {
-        // console.log('POINTERTAP:点击', e);
+        // console.log('client POINTERTAP 点击：', e.data.x, ',', e.data.y, e.globalX, e.globalY);
+        // let pencil = new PIXI.Graphics();
+        // pencil.lineStyle(2, 0xaaaaaa, 0.5)//边线(宽度，颜色，透明度)
+        // pencil.beginFill(0xffffff)//填充
+        // pencil.beginFill('red')//填充
+        // let p = client.toLocal({ 'x': e.data.x, 'y': e.data.y });//画出的点有偏差（鼠标箭头位置左上方）
+        let p = client.toLocal({ 'x': e.globalX, 'y': e.globalY });//画出的点位置正确（鼠标箭头位置）
+        // let p = { 'x': e.data.x, 'y': e.data.y };
+        // pencil.drawCircle(p.x, p.y, 2);//x,y,半径
+        console.log('\t点击位置:', p.x, p.y);
+        // pencil.endFill();
+        // client.addChild(pencil);
+        // client.addChild(pencil);
         if (!drawing) {
-            console.log('刚才点击了，我接到了通知，但是没开始画线，所以我啥也不干。嘿嘿...');
+            // console.log('刚才点击了，我接到了通知，但是没开始画线，所以我啥也不干。嘿嘿...');
             return;
         }
 
         if (onPortClicked) {
             onPortClicked = false;//阻止冒泡尝试 点击端子时置true，点击其他位置是为false
-            console.log('刚才点击了端子，我接到了通知，但我啥也不干哈。嘿嘿...');
+            // console.log('刚才点击了端子，我接到了通知，但我啥也不干哈。嘿嘿...');
             return;
         }
-        console.log('我收到通知，你点击了绘图区，这次我要做点什么...点击位置：' + Math.ceil(client.toLocal(e.data).x) + ',' + Math.ceil(client.toLocal(e.data).y) + ';client:W', client.width + ', H ' + client.height, 'pointer:', e.data.x + ',' + e.data.y)
+        // console.log('我收到通知，你点击了绘图区，这次我要做点什么...点击位置：' + Math.ceil(client.toLocal(e.data).x) + ',' + Math.ceil(client.toLocal(e.data).y) + ';client:W', client.width + ', H ' + client.height, 'pointer:', e.data.x + ',' + e.data.y)
 
         if (client_drawing) {//已经开始跟随画线某条线段
             let line_seg = line_segments.pop();
@@ -544,10 +566,13 @@
         let line_seg = new PIXI.Graphics();
         line_seg.lineStyle(2, 0xFFFFFF, 2);
         line_seg.moveTo(seg_start.x, seg_start.y)
-        line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);
+        // console.log('点击位置：', e.data.x, ',', e.data.y);
+        // line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);
+        line_seg.lineTo(p.x, p.y);
         client.addChild(line_seg);
         line_segments.push(line_seg);//保存线段对象，以便删除
-        linePoints.push({ 'x': client.toLocal(e.data).x, 'y': client.toLocal(e.data).y });//保存正式线段的终点
+        // linePoints.push({ 'x': client.toLocal(e.data).x, 'y': client.toLocal(e.data).y });//保存正式线段的终点
+        linePoints.push({ 'x': p.x, 'y': p.y });//保存正式线段的终点
         client_drawing = false;//为开始一条新的线段准备
     });
 
