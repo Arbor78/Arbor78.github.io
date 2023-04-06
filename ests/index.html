@@ -24,7 +24,7 @@
     <div id="ests" style="margin: auto;"><canvas id="simu"></canvas></div>
 </body>
 <script>
-    console.log('PIXI Version：', PIXI.VERSION);
+    // console.log('PIXI Version：', PIXI.VERSION);
 
     const design_width = 1600;
     const design_height = 900;
@@ -103,51 +103,48 @@
     var lines = [];//存储所有的连线
     var line_segments = [];//存储两端子之间连线的线段
     var linePoints = [];//存储线段起点及转折点坐标,client坐标系,client.toLocal()
-    var pencil = new PIXI.Graphics();
-    pencil.lineStyle(2, 0xFFFFFF, 2);
-    var onPortClicked = false;
 
-    //画布背景（client事件响应区）
-    pencil.beginFill(clientBGColor);
-    let clientBG = pencil.drawRect(0, 0, design_width - 10, design_height - 100);
+    //绘图区边框及背景
+    var pencil = new PIXI.Graphics();
+    pencil.lineStyle(2, 0xFFFFFF, 2);//绘图区边框颜色
+    var onPortClicked = false;
+    pencil.beginFill(clientBGColor);//绘图区背景色（client事件响应区）
+    let clientBG = pencil.drawRect(0, 0, design_width - 10, design_height - 100);//绘图区背景矩形
     pencil.endFill();
     client.addChild(clientBG);
 
-    // let pen = new PIXI.Graphics();
-    // pen.lineStyle(2, 0xdcdcdc, 2);
-    // // let c = pen.drawRect(client.toLocal({ 'x': client.width, 'y': client.height }).x - 10, client.toLocal({ 'x': client.width, 'y': client.height }).y - 10, 15, 15);
-    // let c = pen.drawRect(client.width - 1000, client.height.y - 500, 15, 15);
-    // let o = { 'x': client.width, 'y': client.height };
-    // // console.log('Origin:', o, '\nlocal:', client.toLocal(o), '\nglobal:', client.toGlobal(o));
-    // // console.log(client.toLocal({ 'x': client.width, 'y': client.height }), { 'x': client.width, 'y': client.height },client.toGlobal());
-    // client.addChild(c);
-
-
-
     //元件构造函数：el{name,text,img,hot,scale,x,y}元件，元件符号，图片，是否响应事件，缩放，x相对坐标，y相对坐标
-    const Element = function (el, parentContainer) {
+    const Element = function (el, parentContainer, padding) {
         this._name = el.name;
         this._parentContainer = parentContainer || client;
+        this._pad = padding || 0;
         //元件容器：
         this._container = new PIXI.Container();
         this._parentContainer.addChild(this._container);
 
         //元件在父容器中的位置坐标：
-        this._x = el.x || 0;
-        this._y = el.y || 0;
+        this._x = this._pad + (el.x || 0);
+        this._y = this._pad + (el.y || 0);
         this._container.x = this._x;
         this._container.y = this._y;
         //元件符号：
-        this._text = new PIXI.Text(el.text);
-        this._text.style.fill = 'white';
-        this._text.style.fontSize = 20;
-        this._container.addChild(this._text);
+        if (el.text) {
+            this._text = new PIXI.Text(el.text);
+            this._text.style.fill = 'white';
+            this._text.style.fontSize = 20;
+            this._container.addChild(this._text);
+        } else {
+            this._text = new PIXI.Text();
+            this._text.style.fontSize = 0;
+            this._container.addChild(this._text);
+        }
+
         //元件图片：
         this._sprite = PIXI.Sprite.from(el.img);
 
         this._container.addChild(this._sprite);
         this._scale = el.scale || 1;
-        console.log('\t', this._name);
+        // console.log('\t', this._name);
         this._sprite.scale.set(this._scale, this._scale);
 
         //符号与图片的位置：
@@ -156,6 +153,7 @@
         this._text.y = 0;
         this._sprite.x = 0;
         this._sprite.y = this._text.height + 2;
+        // this._sprite.y = 2;
         // this._sprite.pivot.set(this._sprite.width/2, this._sprite.height/2);
         //元件边框 初始化
         this._box = new PIXI.Graphics();
@@ -181,7 +179,7 @@
 
             //点击端子图片时开始或终止连线：首次点击开始，二次点击自身取消划线，二次点击目标为其他端子终止划线
             this._sprite.addEventListener('pointertap', (e) => {
-                console.log(this._sprite.name, 'POINTERTAP:', e.globalX, e.globalY);
+                // console.log(this._sprite.name, 'POINTERTAP:', e.globalX, e.globalY);
                 onPortClicked = true;//阻止冒泡 点击端子时置true，点击其他位置是为false
                 if (drawing) {
 
@@ -230,152 +228,318 @@
 
     }
     //端子组
-    const PortsGroup = function (name, el, parentContainer) {
-        this._name = name;
-        console.log('创建PortsGroup:' + this._name);
+    // const PortsGroup = function (name, el, parentContainer) {
+    //     this._name = name;
+    //     console.log('创建PortsGroup:' + this._name);
 
-        this._parentContainer = parentContainer || client;//默认加载到client容器
+    //     this._parentContainer = parentContainer || client;//默认加载到client容器
 
-        this._ports = [];
+    //     this._ports = [];
 
-        this._container = new PIXI.Container();
-        this._parentContainer.addChild(this._container);
+    //     this._container = new PIXI.Container();
+    //     this._parentContainer.addChild(this._container);
+    //     this._container.x = el.x;
+    //     this._container.y = el.y;
 
-        this._portsW = 0;//端子总宽度
-        this._portsH = 0;//端子总高度
-        //下边框及文字符号
-        //下边框位置
-        this._linePad = 5
-        this._lineX = 0;
-        this._lineY = 0;
-        this._lineW = 0;
-        this._lineH = 5;
-        //文字符号位置
-        this._text = new PIXI.Text(this._name);
-        this._container.addChild(this._text);
-        this._text.style.fill = 'white';
-        this._text.style.fontSize = 20;
-        this._text.anchor.set(0.5, 0);
-        this._textX = this._portsW / 2 - this._text.width / 2;
-        this._textY = this._portsH + this._text.height;
-        //用于画下边框的画笔
-        this._graphics = new PIXI.Graphics();
-        this._graphics.lineStyle(1, 0xffd900, 4);
 
-        this._container.addChild(this._graphics);
-        //
-        this._draw = () => {
-            console.log('\t绘制符号', this._name);
-            //端子组符号：
-            this._text.style.fill = 'white';
-            this._text.style.fontSize = 20;
-            this._text.anchor.set(0.5, 0);
-            this._textX = this._container.width / 2 - this._text.width / 2;//居中
-            this._textY = this._portsH + 5;
-            this._text.x = this._textX;
-            this._text.y = this._textY;
-            console.log('\t绘制符号', this._name, '位置：', this._textX, this._textY);
-            console.log('\tportsW:', this._portsW, 'containerW:', this._container.width);
-            console.log('\t绘制下边框');
-            //重绘下边框
-            this._container.removeChild(this._graphics);
-            this._graphics = new PIXI.Graphics();
-            this._graphics.lineStyle(1, 0xffd900, 4);
-            this._graphics.moveTo(15, this._textY + this._text.height / 2);
-            this._graphics.lineTo(15, this._textY + this._text.height + 2);
-            this._graphics.lineTo(this._portsW - 25, this._textY + this._text.height + 2);
-            this._graphics.lineTo(this._portsW - 25, this._textY + this._text.height / 2);
-            console.log('\tlength:', this._portsW - 25 - 15, 'height:', this._textY + this._text.height + 2 - (this._textY + this._text.height / 2));
-            console.log('\t起点：', 15, ',', this._textY + this._text.height + 2, '终点', this._portsW - 25, ',', this._textY + this._text.height + 2)
-            this._container.addChild(this._graphics);
-        };
+    //     this._portsW = 0;//端子总宽度
+    //     this._portsH = 0;//端子总高度
+    //     //下边框及文字符号
+    //     //下边框位置
+    //     this._linePad = 5
+    //     this._lineX = 0;
+    //     this._lineY = 0;
+    //     this._lineW = 0;
+    //     this._lineH = 5;
+    //     //文字符号位置
+    //     this._text = new PIXI.Text(this._name);
+    //     this._container.addChild(this._text);
+    //     this._text.style.fill = 'white';
+    //     this._text.style.fontSize = 20;
+    //     this._text.anchor.set(0.5, 0);
+    //     this._textX = this._portsW / 2 - this._text.width / 2;
+    //     this._textY = this._portsH + this._text.height;
+    //     //用于画下边框的画笔
+    //     this._graphics = new PIXI.Graphics();
+    //     this._graphics.lineStyle(1, 0xffd900, 4);
 
-        //端子：
-        let xPos = 0;
-        let i = 0;
-        el.forEach((port) => {
-            console.log('\t=' + port.name);
-            let p = new Element(port, parentContainer);
-            this._ports.push(p._container);
-            this._container.addChild(p._container);
-            this._portsW += p._container.width;
-            this._portsH = p._container.height;
-            xPos += i * p._container.width;
-            i++;
-            p.x = xPos;
-            console.log('\t----Pos:' + port.x + ',' + port.y, 'portsW', this._portsW, 'Continer w:', this._container.width, 'h:', this._container.height);
-            // this._container.dispatchEvent(PortAddedEvent);
-        });
+    //     this._container.addChild(this._graphics);
+    //     //
+    //     this._draw = () => {
+    //         // console.log('\t绘制符号', this._name);
+    //         //更新端子组符号位置：
+    //         // this._text.style.fill = 'white';
+    //         // this._text.style.fontSize = 20;
+    //         // this._text.anchor.set(0.5, 0);
+    //         this._textX = this._container.width / 2 - this._text.width / 2;//居中
+    //         this._textY = this._portsH + 5;
+    //         this._text.x = this._textX;
+    //         this._text.y = this._textY;
+    //         console.log('\t符号:', this._name, '位置：', this._textX, this._textY, '\tportsW:', this._portsW, 'containerW:', this._container.width);
+    //         // console.log('\tportsW:', this._portsW, 'containerW:', this._container.width);
+    //         // console.log('\t绘制下边框');
+    //         //重绘下边框
+    //         this._container.removeChild(this._graphics);
+    //         this._graphics = new PIXI.Graphics();
+    //         this._graphics.lineStyle(1, 0xffd900, 4);
+    //         this._graphics.moveTo(15, this._textY + this._text.height / 2);
+    //         this._graphics.lineTo(15, this._textY + this._text.height + 2);
+    //         this._graphics.lineTo(this._portsW - 25, this._textY + this._text.height + 2);
+    //         this._graphics.lineTo(this._portsW - 25, this._textY + this._text.height / 2);
+    //         console.log('\tlength:', this._portsW - 25 - 15, 'height:', this._textY + this._text.height + 2 - (this._textY + this._text.height / 2));
+    //         console.log('\t起点：', 15, ',', this._textY + this._text.height + 2, '终点', this._portsW - 25, ',', this._textY + this._text.height + 2)
+    //         this._container.addChild(this._graphics);
+    //     };
 
-        this._draw();
+    //     //端子：
+    //     let xPos = 0;
+    //     let i = 0;
+    //     el.forEach((port) => {
+    //         console.log('\t=' + port.name);
+    //         let p = new Element(port, parentContainer);
+    //         this._ports.push(p._container);
+    //         this._container.addChild(p._container);
+    //         this._portsW += p._container.width;
+    //         this._portsH = p._container.height;
+    //         xPos += i * p._container.width;
+    //         i++;
+    //         p.x = xPos;
+    //         console.log('\t----Pos:' + port.x + ',' + port.y, 'portsW', this._portsW, 'Continer w:', this._container.width, 'h:', this._container.height);
+    //         // this._container.dispatchEvent(PortAddedEvent);
+    //     });
 
-        console.log('\tContiner w:', this._container.width, 'h:', this._container.height);
+    //     this._draw();
 
-        this.addPort = function (portJSON) {
-            console.log('addPort:' + portJSON.name);
-            let p = new Element(portJSON, parentContainer);
-            this._ports.push(p._container);
-            let xPos = this._container.width + p._container;
-            this._container.addChild(p._container);
-            p.x = xPos;
-            console.log('\tPos:' + port.x + ',' + port.y);
-            this._draw();
-        }
-        // this._draw();
+    //     console.log('\tContiner w:', this._container.width, 'h:', this._container.height);
 
-    }
-    //元件组
+    //     this.addPort = function (portJSON) {
+    //         console.log('addPort:' + portJSON.name);
+    //         let p = new Element(portJSON, parentContainer);
+    //         this._ports.push(p._container);
+    //         let xPos = this._container.width + p._container;
+    //         this._container.addChild(p._container);
+    //         p.x = xPos;
+    //         console.log('\tPos:' + port.x + ',' + port.y);
+    //         this._draw();
+    //     }
+    //     // this._draw();
+
+    // }
+    //元件组：布局：自上而下 标签、输入端子、本体、输出端子
     function ElementsGroup(info, parentContainer) {
+        this._pad = 5;//边框与元件、元件之间的距离
         this._parentContainer = parentContainer || client;
         this._name = info.name;
         this._text = info.text;
         // console.log('+ ElementGroup:' + this._name);
+        //元件容器
         this._container = new PIXI.Container();
         this._parentContainer.addChild(this._container);
-        this._elements = new Array();
+        this._container.x = info.x;
+        this._container.y = info.y;
+        //元件标签（符号）
+        this._label = new PIXI.Text(this._text);
+        this._label.style.fill = 'white';
+        this._label.style.fontSize = 20;
+        this._container.addChild(this._label);
+        this._label.anchor.set(0.5, 0);
+        this._label.x = this._container.width / 2;//居中
+        // this._label.y = this._portsH + 5;
+        this._label.y = this._pad;
+        this._elements = new Array();//元件本体
+        this._inPorts = new Array();//元件输入端子
+        this._outPorts = new Array();//元件输出端子
+        //元件输入端子容器
+        this._inPortsContainer = new PIXI.Container();
+        this._container.addChild(this._inPortsContainer);
+
+        this._inPortsContainer.x = 0;
+        // this._inPortsContainer.x = this._container.width / 2;//水平居中
+        this._inPortsContainer.y = this._label.y + this._label.height + this._pad;
+        //元件本体容器
+        this._bodyContainer = new PIXI.Container();
+        this._container.addChild(this._bodyContainer);
+
+        // this._bodyContainer.x = this._container.width / 2;//水平居中
+        this._bodyContainer.x = 0;
+        this._bodyContainer.y = this._inPortsContainer.y + this._inPortsContainer.height + this._pad;
+        //元件输出端子容器
+        this._outPortsContainer = new PIXI.Container();
+        this._container.addChild(this._outPortsContainer);
+
+        // this._outPortsContainer.x = this._container.width / 2;//水平居中
+        this._outPortsContainer.x = 0;
+        this._outPortsContainer.y = this._bodyContainer.y + this._bodyContainer.height + this._pad;
+
+        this._box = new PIXI.Graphics();
+        this._box.lineStyle(2, 0xFFFFFF, 2);
+        this._box.drawRect(0, 0, this._container.width + this._pad * 2, this._container.height + this._pad * 2);
+        this._container.addChild(this._box);
+
+        // console.log('添加元件：\n\tLabel:', this._label.x, this._label.y, '\n\tI:', this._inPortsContainer.x, this._inPortsContainer.y, '\n\tBody:', this._bodyContainer.x, this._bodyContainer.y, '\n\tO:', this._outPortsContainer.x, this._outPortsContainer.y);
         this.addElement = function (el) {
-            let element = new Element(el, this._container);
+            // console.log('添加器件本体:');
+            let element = new Element(el, this._bodyContainer, this._pad);
             this._elements.push(element);
+            // console.log('H:', this._bodyContainer.height)
+            //重绘标签、输入输出端子容器、外边框
+            this.reDraw();
+        }
+        //添加输入端子：portsList:array of Json
+        this.addPorts_IN = function (portsList) {
+            // console.log('添加输入端子:');
+            portsList.forEach(p => {
+                let port = new Element(p, this._inPortsContainer, this._pad);
+                this._inPorts.push(port);
+            });
+            // console.log('H:', this._inPortsContainer.height)
+            //重绘标签、外边框
+            this.reDraw();
+        }
+        //添加输出端子：portsList:array of Json
+        this.addPorts_OUT = function (portsList) {
+            // console.log('添加输出端子:');
+            portsList.forEach(p => {
+                let port = new Element(p, this._outPortsContainer, this._pad);
+                this._outPorts.push(port);
+            });
+            // console.log('H:', this._outPortsContainer.height)
+            //重绘标签、外边框
+            this.reDraw();
+        }
+
+        //重绘标签、子容器位置、外边框
+        this.reDraw = function () {
+            // this._label.x = this._container.width / 2 - this._label.width / 2 + this._pad * 2;//居中
+            this._label.x = this._container.width / 2;//居中
+            this._label.y = this._pad;
+            // this._inPortsContainer.anchor.set(0.5, 0);
+            // this._inPortsContainer.x = (this._container.width - this._inPortsContainer.width - this._pad * 2) / 2;
+            this._inPortsContainer.y = this._label.y + this._label.height + this._pad;
+            // this._bodyContainer.anchor.set(0.5, 0);
+            // this._bodyContainer.x = (this._container.width - this._bodyContainer.width - this._pad * 2) / 2;
+            this._bodyContainer.y = this._inPortsContainer.y + this._inPortsContainer.height + this._pad;
+            // this._outPortsContainer.anchor.set(0.5, 0);
+            // this._outPortsContainer.x = (this._container.width - this._outPortsContainer.width - this._pad * 2) / 2;// 水平居中
+            this._outPortsContainer.y = this._bodyContainer.y + this._bodyContainer.height + this._pad;
+            this._container.removeChild(this._box);
+            this._box = new PIXI.Graphics();
+            this._box.lineStyle(2, 0xFFFFFF, 2);
+            this._box.drawRect(0, 0, this._container.width + this._pad * 2, this._container.height + this._pad * 2 + 2);
+            this._container.addChild(this._box);
+            this.width = this._container.width;
+            this.height = this._container.height;
+            // console.log('\tLabel H:', this._label.height, '\tIn H:', this._inPortsContainer.height, '\tBody H:', this._bodyContainer.height, '\tOut H:', this._outPortsContainer.height)
+            // console.log('\t布局：\n\tLabel:', this._label.x, this._label.y, '\n\tI:', this._inPortsContainer.x, this._inPortsContainer.y, '\n\tBody:', this._bodyContainer.x, this._bodyContainer.y, '\n\tO:', this._outPortsContainer.x, this._outPortsContainer.y);
         }
     }
+
+    //三相电源输出：
+    let pw1 = new ElementsGroup({
+        'name': '三相电源输出',
+        'text': '三相电源总开关',
+        'x': 10,
+        'y': 10,
+    }, client);
+    //电源
+    pw1.addElement({
+        'name': '三相电源总开关',
+        //'text': 'QF1',
+        //'parent': client,
+        'img': 'img/断路器-3p-OFF.png',
+        // 'x': 0,
+        // 'y': 100,
+        'x': 0,
+        'y': 0,
+        // 'scale': 0.7
+    });
+
+    pw1.addPorts_OUT([{
+        'name': '电源出线端 L1',
+        'text': '2',
+        'parent': client,
+        'img': 'img/端子_黄色.png',
+        'x': 0,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '电源出线端 L2',
+        'text': '4',
+        'parent': client,
+        'img': 'img/端子_绿色.png',
+        'x': 47,
+        'y': 00,
+        'hot': true
+    }, {
+        'name': '电源出线端 L3',
+        'text': '6',
+        'parent': client,
+        'img': 'img/端子_红色.png',
+        'x': 94,
+        'y': 0,
+        'hot': true
+    }]);
+    //单相电源：
+    let pw2 = new ElementsGroup({
+        'name': '单相电源输出',
+        'text': '单相电源',
+        'x': 175,
+        'y': 10,
+    }, client);
+    pw2.addElement({
+        'name': '单相电源总开关',
+        //'text': 'QF2',
+        //'parent': client,
+        'img': 'img/断路器-2p-OFF.png',
+        // 'x': 169,
+        // 'y': 100,
+        'x': 0,
+        'y': 0,
+        // 'scale': 0.7
+    });
+
+    pw2.addPorts_OUT([{
+        'name': '电源出线端 L',
+        'text': '2',
+        'parent': client,
+        'img': 'img/端子_红色.png',
+        'x': 0,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '电源出线端 N',
+        'text': '4',
+        'parent': client,
+        'img': 'img/端子_蓝色.png',
+        'x': 47,
+        'y': 0,
+        'hot': true
+    }]);
+
+    //三极断路器QF1：
     let qf1 = new ElementsGroup({
         'name': '断路器 QF1',
-        'text': 'QF1'
+        'text': 'QF1',
+        // 'x': 10,
+        'x': 290,
+        'y': 10,
     }, client);
     //电源
     qf1.addElement({
         'name': '断路器 SQ1',
-        'text': 'QF1',
+        //'text': 'QF1',
         //'parent': client,
         'img': 'img/断路器-3p-OFF.png',
+        // 'x': 0,
+        // 'y': 100,
         'x': 0,
-        'y': 100,
+        'y': 0,
         // 'scale': 0.7
     });
-
-
-    let qf2 = new ElementsGroup({
-        'name': '断路器 QF2',
-        'text': 'QF2'
-    }, client);
-    qf2.addElement({
-        'name': '断路器 SQ2',
-        'text': 'QF2',
-        //'parent': client,
-        'img': 'img/断路器-2p-OFF.png',
-        'x': 169,
-        'y': 100,
-        // 'scale': 0.7
-    });
-
-
-    //电源进线端:
-
-    //QF1进线端
-    let qf1_in = new PortsGroup('QF1', [{
+    qf1.addPorts_IN([{
         'name': '电源进线端 L1',
         'text': '1',
-        'parent': client,
+        // 'parent': client,
         'img': 'img/端子_黄色.png',
         'x': 0,
         'y': 0,
@@ -383,55 +547,70 @@
     }, {
         'name': '电源进线端 L2',
         'text': '3',
-        'parent': client,
+        // 'parent': client,
         'img': 'img/端子_绿色.png',
-        'x': 60,
+        'x': 47,
         'y': 0,
         'hot': true
     }, {
         'name': '电源进线端 L3',
         'text': '5',
-        'parent': client,
+        // 'parent': client,
         'img': 'img/端子_红色.png',
-        'x': 120,
+        'x': 94,
         'y': 0,
         'hot': true
-    }], client);
-
-    //QF1出线端
-    let qf1_out = new PortsGroup('QF1', [{
+    }]);
+    qf1.addPorts_OUT([{
         'name': '电源出线端 L1',
         'text': '2',
         'parent': client,
         'img': 'img/端子_黄色.png',
         'x': 0,
-        'y': 380,
+        'y': 0,
         'hot': true
     }, {
         'name': '电源出线端 L2',
         'text': '4',
         'parent': client,
         'img': 'img/端子_绿色.png',
-        'x': 60,
-        'y': 380,
+        'x': 47,
+        'y': 00,
         'hot': true
     }, {
         'name': '电源出线端 L3',
         'text': '6',
         'parent': client,
         'img': 'img/端子_红色.png',
-        'x': 120,
-        'y': 380,
+        'x': 94,
+        'y': 0,
         'hot': true
-    }], client);
-
-    //QF2进线端
-    let qf2_in = new PortsGroup('QF2', [{
+    }]);
+    //二极断路器：
+    let qf2 = new ElementsGroup({
+        'name': '断路器 QF2',
+        'text': 'QF2',
+        // 'x': 175,
+        'x': 450,
+        'y': 10,
+    }, client);
+    qf2.addElement({
+        'name': '断路器 SQ2',
+        //'text': 'QF2',
+        //'parent': client,
+        'img': 'img/断路器-2p-OFF.png',
+        // 'x': 169,
+        // 'y': 100,
+        'x': 0,
+        'y': 0,
+        // 'scale': 0.7
+    });
+    qf2.addPorts_IN([{
         'name': '电源进线端 L',
         'text': '1',
         'parent': client,
         'img': 'img/端子_红色.png',
-        'x': 200,
+        'x': 0,
         'y': 0,
         'hot': true
     }, {
@@ -439,29 +618,291 @@
         'text': '3',
         'parent': client,
         'img': 'img/端子_蓝色.png',
-        'x': 260,
+        'x': 47,
         'y': 0,
         'hot': true
-    }], client);
-
-    //QF2出线端
-    let qf2_out = new PortsGroup('QF2', [{
+    }]);
+    qf2.addPorts_OUT([{
         'name': '电源出线端 L',
         'text': '2',
         'parent': client,
         'img': 'img/端子_红色.png',
-        'x': 200,
-        'y': 380,
+        'x': 0,
+        'y': 0,
         'hot': true
     }, {
         'name': '电源出线端 N',
         'text': '4',
         'parent': client,
         'img': 'img/端子_蓝色.png',
-        'x': 260,
-        'y': 380,
+        'x': 47,
+        'y': 0,
         'hot': true
-    }], client);
+    }]);
+    //熔断器 FU1:
+    let fu1 = new ElementsGroup({
+        'name': '熔断器 FU1',
+        'text': 'FU1',
+        // 'x': 290,
+        'x': 550,
+        'y': 10
+    });
+    fu1.addElement({
+        'name': '熔断器 FU1',
+        //'text': 'QF1',
+        'img': 'img/熔断器-3p.png',
+        'x': 0,
+        'y': 0,
+        // 'scale': 0.325
+    });
+    fu1.addPorts_IN([{
+        'name': '进线端 1',
+        'text': '1',
+        // 'parent': client,
+        'img': 'img/端子_黄色.png',
+        'x': 0,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '进线端 2',
+        'text': '3',
+        // 'parent': client,
+        'img': 'img/端子_绿色.png',
+        'x': 47,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '进线端 3',
+        'text': '5',
+        // 'parent': client,
+        'img': 'img/端子_红色.png',
+        'x': 94,
+        'y': 0,
+        'hot': true
+    }]);
+    fu1.addPorts_OUT([{
+        'name': '出线端 1',
+        'text': '2',
+        'parent': client,
+        'img': 'img/端子_黄色.png',
+        'x': 0,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '出线端 2',
+        'text': '4',
+        'parent': client,
+        'img': 'img/端子_绿色.png',
+        'x': 47,
+        'y': 00,
+        'hot': true
+    }, {
+        'name': '出线端 3',
+        'text': '6',
+        'parent': client,
+        'img': 'img/端子_红色.png',
+        'x': 94,
+        'y': 0,
+        'hot': true
+    }]);
+    //熔断器 FU2:
+    let fu2 = new ElementsGroup({
+        'name': '熔断器 FU1',
+        'text': 'FU2',
+        // 'x': 450,
+        'x': 710,
+        'y': 10
+    });
+    fu2.addElement({
+        'name': '熔断器 FU1',
+        //'text': 'QF1',
+        'img': 'img/熔断器-2p.png',
+        'x': 0,
+        'y': 0,
+        //'scale': 0.325
+    });
+    fu2.addPorts_IN([{
+        'name': '进线端 1',
+        'text': '1',
+        // 'parent': client,
+        'img': 'img/端子_红色.png',
+        'x': 0,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '进线端 2',
+        'text': '3',
+        // 'parent': client,
+        'img': 'img/端子_蓝色.png',
+        'x': 47,
+        'y': 0,
+        'hot': true
+    }]);
+    fu2.addPorts_OUT([{
+        'name': '出线端 1',
+        'text': '2',
+        'parent': client,
+        'img': 'img/端子_红色.png',
+        'x': 0,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '出线端 2',
+        'text': '4',
+        'parent': client,
+        'img': 'img/端子_蓝色.png',
+        'x': 47,
+        'y': 00,
+        'hot': true
+    }]);
+    //直流24V电源:
+    let pw3 = new ElementsGroup({
+        'name': '断路器 QF2',
+        'text': 'DC24V',
+        // 'x': 175,
+        'x': 830,
+        'y': 10,
+    }, client);
+    pw3.addElement({
+        'name': '断路器 SQ2',
+        //'text': 'QF2',
+        //'parent': client,
+        'img': 'img/DCPower.png',
+        // 'x': 169,
+        // 'y': 100,
+        'x': 0,
+        'y': 0,
+        // 'scale': 0.7
+    });
+    pw3.addPorts_IN([{
+        'name': '电源进线端 L',
+        'text': '+',
+        'parent': client,
+        'img': 'img/小端子_红色.png',
+        'x': 0,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '电源进线端 N',
+        'text': '-',
+        'parent': client,
+        'img': 'img/小端子_黑色.png',
+        'x': 47,
+        'y': 0,
+        'hot': true
+    }]);
+    pw3.addPorts_OUT([{
+        'name': '电源出线端 L',
+        'text': 'L',
+        'parent': client,
+        'img': 'img/端子_红色.png',
+        'x': 0,
+        'y': 0,
+        'hot': true
+    }, {
+        'name': '电源出线端 N',
+        'text': 'N',
+        'parent': client,
+        'img': 'img/端子_蓝色.png',
+        'x': 47,
+        'y': 0,
+        'hot': true
+    }]);
+
+
+    // //电源进线端:
+
+    // //QF1进线端
+    // let qf1_in = new PortsGroup('QF1', [{
+    //     'name': '电源进线端 L1',
+    //     'text': '1',
+    //     'parent': client,
+    //     'img': 'img/端子_黄色.png',
+    //     'x': 0,
+    //     'y': 0,
+    //     'hot': true
+    // }, {
+    //     'name': '电源进线端 L2',
+    //     'text': '3',
+    //     'parent': client,
+    //     'img': 'img/端子_绿色.png',
+    //     'x': 60,
+    //     'y': 0,
+    //     'hot': true
+    // }, {
+    //     'name': '电源进线端 L3',
+    //     'text': '5',
+    //     'parent': client,
+    //     'img': 'img/端子_红色.png',
+    //     'x': 120,
+    //     'y': 0,
+    //     'hot': true
+    // }], client);
+
+    // //QF1出线端
+    // let qf1_out = new PortsGroup('QF1', [{
+    //     'name': '电源出线端 L1',
+    //     'text': '2',
+    //     'parent': client,
+    //     'img': 'img/端子_黄色.png',
+    //     'x': 0,
+    //     'y': 380,
+    //     'hot': true
+    // }, {
+    //     'name': '电源出线端 L2',
+    //     'text': '4',
+    //     'parent': client,
+    //     'img': 'img/端子_绿色.png',
+    //     'x': 60,
+    //     'y': 380,
+    //     'hot': true
+    // }, {
+    //     'name': '电源出线端 L3',
+    //     'text': '6',
+    //     'parent': client,
+    //     'img': 'img/端子_红色.png',
+    //     'x': 120,
+    //     'y': 380,
+    //     'hot': true
+    // }], client);
+
+    // //QF2进线端
+    // let qf2_in = new PortsGroup('QF2', [{
+    //     'name': '电源进线端 L',
+    //     'text': '1',
+    //     'parent': client,
+    //     'img': 'img/端子_红色.png',
+    //     'x': 200,
+    //     'y': 0,
+    //     'hot': true
+    // }, {
+    //     'name': '电源进线端 N',
+    //     'text': '3',
+    //     'parent': client,
+    //     'img': 'img/端子_蓝色.png',
+    //     'x': 260,
+    //     'y': 0,
+    //     'hot': true
+    // }], client);
+
+    // //QF2出线端
+    // let qf2_out = new PortsGroup('QF2', [{
+    //     'name': '电源出线端 L',
+    //     'text': '2',
+    //     'parent': client,
+    //     'img': 'img/端子_红色.png',
+    //     'x': 200,
+    //     'y': 380,
+    //     'hot': true
+    // }, {
+    //     'name': '电源出线端 N',
+    //     'text': '4',
+    //     'parent': client,
+    //     'img': 'img/端子_蓝色.png',
+    //     'x': 260,
+    //     'y': 380,
+    //     'hot': true
+    // }], client);
 
 
     //事件处理：
@@ -493,8 +934,8 @@
     //画布事件响应：
     // client.interactive = true;//过时写法
     // client.eventMode = 'none';//初始化 关闭画布事件响应，关闭后子显示对象也不响应事件
-    // client.eventMode = 'static';
-    client.eventMode = 'dynamic';
+    client.eventMode = 'static';
+    // client.eventMode = 'dynamic';
     //跟随画线
     var client_drawing = false;//跟随画线标志，已经画了一条线
     client.addEventListener('pointermove', (e) => {
@@ -538,7 +979,7 @@
         let p = client.toLocal({ 'x': e.globalX, 'y': e.globalY });//画出的点位置正确（鼠标箭头位置）
         // let p = { 'x': e.data.x, 'y': e.data.y };
         // pencil.drawCircle(p.x, p.y, 2);//x,y,半径
-        console.log('\t点击位置:', p.x, p.y);
+        // console.log('\t点击位置:', p.x, p.y);
         // pencil.endFill();
         // client.addChild(pencil);
         // client.addChild(pencil);
