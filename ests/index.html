@@ -221,7 +221,10 @@
                 } else {
                     drawing = true;//开始画线
                     start = e.target;
-                    linePoints.push({ 'x': client.toLocal(start.toGlobal(start.position)).x + start.width / 2, 'y': client.toLocal(start.toGlobal(start.position)).y });
+                    let p = this._container.toGlobal({ 'x': this._sprite.x + this._sprite.width / 2, 'y': this._sprite.y + this._sprite.height / 2 });
+                    linePoints.push({ 'x': client.toLocal(p).x, 'y': client.toLocal(p).y });
+                    // linePoints.push({ 'x': client.toLocal(start.toGlobal(start.position)).x + start.width / 2, 'y': client.toLocal(start.toGlobal(start.position)).y });
+
                 }
 
             });
