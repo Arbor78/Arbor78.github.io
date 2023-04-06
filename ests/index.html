@@ -197,7 +197,8 @@
                         end = e.target;
 
                         const pencil = new PIXI.Graphics();
-                        pencil.lineStyle(2, 0xFFFFFF, 2);
+                        // pencil.lineStyle(2, 0xFFFFFF, 2);
+                        pencil.lineStyle(2, 0x00FF00, 2);
                         //连线：
                         let line_seg = line_segments.pop();
                         client.removeChild(line_seg);
@@ -644,7 +645,7 @@
         'name': '熔断器 FU1',
         'text': 'FU1',
         // 'x': 290,
-        'x': 550,
+        'x': 560,
         'y': 10
     });
     fu1.addElement({
@@ -710,7 +711,7 @@
         'name': '熔断器 FU1',
         'text': 'FU2',
         // 'x': 450,
-        'x': 710,
+        'x': 720,
         'y': 10
     });
     fu2.addElement({
@@ -760,7 +761,7 @@
         'name': '断路器 QF2',
         'text': 'DC24V',
         // 'x': 175,
-        'x': 830,
+        'x': 835,
         'y': 10,
     }, client);
     pw3.addElement({
@@ -953,7 +954,8 @@
         let seg_start = null;
         [seg_start] = linePoints.slice(-1);
         let line_seg = new PIXI.Graphics();
-        line_seg.lineStyle(2, 0xFFFFFF, 2);
+        // line_seg.lineStyle(2, 0xFFFFFF, 2);
+        line_seg.lineStyle(2, 0x00FF00, 2);
         line_seg.moveTo(seg_start.x, seg_start.y);//从上一条正式线段终点开始画
         let p = client.toLocal({ 'x': e.globalX, 'y': e.globalY });
         // line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);//画到鼠标位置
@@ -1005,7 +1007,8 @@
         let seg_start = null;
         [seg_start] = linePoints.slice(-1);
         let line_seg = new PIXI.Graphics();
-        line_seg.lineStyle(2, 0xFFFFFF, 2);
+        // line_seg.lineStyle(2, 0xFFFFFF, 2);
+        line_seg.lineStyle(2, 0x00FF00, 2);
         line_seg.moveTo(seg_start.x, seg_start.y)
         // console.log('点击位置：', e.data.x, ',', e.data.y);
         // line_seg.lineTo(client.toLocal(e.data).x, client.toLocal(e.data).y);
