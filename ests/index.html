@@ -931,10 +931,6 @@
     //退出页面：
     window.addEventListener("unload", () => app.destroy(true));
 
-    //
-    // app.stage.interactive = true;
-    // app.stage.hitArea = app.screen;
-
     //画布事件响应：
     // client.interactive = true;//过时写法
     // client.eventMode = 'none';//初始化 关闭画布事件响应，关闭后子显示对象也不响应事件
@@ -967,13 +963,6 @@
         line_segments.push(line_seg);//保存线段对象，以便删除
     });
     //点击划线
-    // app.stage.eventMode = 'static';
-    // app.stage.addEventListener('pointertap', (e) => {
-    //     // console.log('POINTERTAP:点击', e);
-    //     console.log('stage POINTERTAP 点击位置：\n', e.data.x, ',', e.data.y, e.globalX, e.globalY);
-
-    // });
-
     client.addEventListener('pointertap', (e) => {
         // console.log('client POINTERTAP 点击：', e.data.x, ',', e.data.y, e.globalX, e.globalY);
         // let pencil = new PIXI.Graphics();
